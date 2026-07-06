@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Message;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MessageController extends Controller
 {
@@ -18,24 +19,32 @@ class MessageController extends Controller
             'sender_id'   => 'required|integer',
             'msg_txt'      => 'required|string',
         ]);
-        //temporarily bypass foreign keys for testing
-     //\Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
 
         // Save the message into the database
-        $message = Message::create($validated);
-
-        //turn on
-     //\Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+         DB::table('messages')->insert([
+                 'topic_id'   => $validated['topic_id'],
+                 'sender_id'  => $validated['sender_id'],
+                 'msg_txt'    => $validated['msg_txt'],
+                 'is_synced'  => true,
+                 'is_restricted' => false,
+                 'posted_at'  => now(),
+             ]);
 
         //Fire the Event, triggers Laravel Reverb to broadcast it in real-time
 
-   event(new MessageSent($message->topic_id, $message->sender_id, $message->msg_txt));
-        // Return a response to the user who sent it
-        return response()->json([
-            'status' => 'Message sent successfully!',
-            'data' => $message
-        ], 201);
+         event(new MessageSent(
+               $validated['topic_id'],
+               $validated['sender_id'],
+               $validated['msg_txt']
+           ));
+
+           return response()->json([
+               'status' => 'Success',
+               'message' => 'Message stored and broadcasted successfully!'
+           ], 201);
     }
+
 /**
      * Fetch all messages belonging to a specific topic.
      */
