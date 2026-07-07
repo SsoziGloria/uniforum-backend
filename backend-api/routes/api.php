@@ -21,13 +21,17 @@ Route::post('/register', [AuthController::class, 'register']);
 | Protected Forum Routes (Requires Auth & Group Membership Verification)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth:sanctum', 'group.member'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- 1. GROUPS MANAGEMENT ---
     // Get all groups the student belongs to
     Route::get('/groups', [GroupController::class, 'index']);
     // Create a new academic group (if allowed)
     Route::post('/groups', [GroupController::class, 'store']);
+    // Add member endpoint (Protects it so only current group members can add others!)
+    Route::middleware(['group.member'])->group(function () {
+    Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
+        });
 
 
     // --- 2. TOPICS MANAGEMENT ---

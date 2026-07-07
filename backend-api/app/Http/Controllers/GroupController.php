@@ -4,39 +4,122 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\GroupMember;
 
 class GroupController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-       $groups = Group::all();
 
+
+   // Fetch only the groups the logged-in student belongs to using GroupMember model
+   public function index(Request $request)
+   {
+       //Get the authenticated student's ID
+       $userId = $request->user()->user_id;
+
+       //Fetch memberships for this user along with their related group details
+       $memberships = GroupMember::with('group')
+           ->where('user_id', $userId)
+           ->get();
+
+       //Extract just the group objects out of the memberships collection
+       $myGroups = $memberships->map(function ($membership) {
+           return $membership->group;
+       })->filter(); // filter() ensures no null values if a group was missing
+
+       //Return the clean JSON response
        return response()->json([
-          'success' => true,
-           'data' => $groups
-           ], 200);
-    }
+           'success' => true,
+           'data'    => array_values($myGroups->toArray())
+       ], 200);
+   }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-            //Validate the incoming request data
+       //Validate the group creation data
+          $validated = $request->validate([
+          'group_name' => 'required|string|max:255',
+          'description'=> 'nullable|string',
+              ]);
+
+        // Get the authenticated user creating the group
+           $creatorId = $request->user()->user_id;
+
+        //Insert the group and get the new auto-incremented ID
+           $groupId = DB::table('groups')->insertGetId([
+            'group_name'  => $validated['group_name'],
+            'description' => $validated['description'] ?? null,
+            'created_by'  => $creatorId, // Tracks who owns the group
+            'created_at'  => now(),
+            'updated_at'  => now(),
+                ]);
+
+             //AUTOMATIC ASSIGNMENT: Link the creator to the group immediately
+               DB::table('group_members')->insert([
+                 'group_id' => $groupId,
+                 'user_id'  => $creatorId,
+                 ]);
+
+                 return response()->json([
+                     'status'  => 'Success',
+                     'message' => 'Group created and creator automatically joined successfully!',
+                     'group'   => [
+                     'group_id'   => $groupId,
+                     'group_name' => $validated['group_name'],
+                     'description' => $validated['description'] ?? null,
+                     'created_at' => now()
+                     ]
+                 ], 201);
+             }
+
+    //ADD ANOTHER STUDENT TO GROUP USING EMAIL
+        public function addMember(Request $request, $groupId)
+        {
             $validated = $request->validate([
-                'group_name' => 'required|string|unique:groups,group_name|max:255',
-                'description' => 'nullable|string',
+                'email' => 'required|email'
             ]);
 
-            //Create and save the group
-            $group = Group::create($validated);
+            // Find the user by email
+            $userToAdd = DB::table('users')->where('email', $validated['email'])->first();
 
-            // Return the created group with a 201 success status
-            return response()->json($group, 201);
-    }
+            if (!$userToAdd) {
+                return response()->json([
+                    'status'  => 'Error',
+                    'message' => 'No student found with that email address.'
+                ], 404);
+            }
+
+            // Check if they are already in the group
+            $alreadyMember = DB::table('group_members')
+                ->where('group_id', $groupId)
+                ->where('user_id', $userToAdd->user_id)
+                ->exists();
+
+            if ($alreadyMember) {
+                return response()->json([
+                    'status'  => 'Error',
+                    'message' => 'This student is already a registered member of this group.'
+                ], 422);
+            }
+
+            // Add them to the group
+            DB::table('group_members')->insert([
+                'group_id' => $groupId,
+                'user_id'  => $userToAdd->user_id
+            ]);
+
+            return response()->json([
+                'status'  => 'Success',
+                'message' => "Successfully added {$userToAdd->user_name} to the group!"
+            ], 200);
+        }
+
 
     /**
      * Display the specified resource.

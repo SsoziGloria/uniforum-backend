@@ -12,6 +12,9 @@ class GroupMember extends Model
     public $timestamps = false;
     protected $fillable = ['group_id', 'user_id', 'joined_at', 'last_activity'];
 
+
+
+
     public function group(): BelongsTo
     {
        return $this->belongsTo(Group::class, 'group_id', 'group_id');
