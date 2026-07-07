@@ -9,22 +9,42 @@ use Illuminate\Support\Facades\DB;
 
 class MessageController extends Controller
 {
+       /**
+        * Fetch all messages belonging to a specific topic.
+         */
+        public function getTopicMessages($group_id, $topic_id)
+        {
+            //Look up all messages in the DB that match the requested topic_id
+            //latest() to get the newest messages first
+            $messages = Message::where('topic_id', $topic_id)
+                               ->orderBy('posted_at', 'desc')
+                               ->get();
 
-    public function store(Request $request)
+            //Return the list of messages as a clean JSON response
+
+            return response()->json([
+                'status' => 'Messages retrieved successfully',
+                'data' => $messages
+            ], 200);
+        }
+/**
+   * Store a new message an trigger real-time broadcast
+ */
+    public function store(Request $request, $group_id, $topic_id)
     {
 
         //Validate the incoming request data
         $validated = $request->validate([
-            'topic_id' => 'required|integer',
-            'sender_id'   => 'required|integer',
             'msg_txt'      => 'required|string',
         ]);
 
+         $sender_id = $request->user()->user_id;
+         $sender_id = $request->user()->user_id;
 
         // Save the message into the database
          DB::table('messages')->insert([
-                 'topic_id'   => $validated['topic_id'],
-                 'sender_id'  => $validated['sender_id'],
+                 'topic_id'   => $topic_id,
+                 'sender_id'  => $sender_id,
                  'msg_txt'    => $validated['msg_txt'],
                  'is_synced'  => true,
                  'is_restricted' => false,
@@ -34,8 +54,8 @@ class MessageController extends Controller
         //Fire the Event, triggers Laravel Reverb to broadcast it in real-time
 
          event(new MessageSent(
-               $validated['topic_id'],
-               $validated['sender_id'],
+               $topic_id,
+               $sender_id,
                $validated['msg_txt']
            ));
 
@@ -45,22 +65,5 @@ class MessageController extends Controller
            ], 201);
     }
 
-/**
-     * Fetch all messages belonging to a specific topic.
-     */
-    public function getTopicMessages($topic_id)
-    {
-        //Look up all messages in the DB that match the requested topic_id
-        //latest() to get the newest messages first
-        $messages = Message::where('topic_id', $topic_id)
-                           ->orderBy('posted_at', 'desc')
-                           ->get();
 
-        //Return the list of messages as a clean JSON response
-
-        return response()->json([
-            'status' => 'Messages retrieved successfully',
-            'data' => $messages
-        ], 200);
-    }
 }

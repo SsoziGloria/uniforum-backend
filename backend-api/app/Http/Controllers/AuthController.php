@@ -27,19 +27,14 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            //Create a clean API Access Token for this session
-            // We manually insert a token tracking string since we are using standard DB tables
-            $tokenStr = bin2hex(random_bytes(40)); // Generates a secure random 80-character string
+           // Use Eloquent to generate a valid Sanctum Token
+               // Fetch the User model instance using your custom primary key
+               $userModel = \App\Models\User::find($user->user_id);
 
-            DB::table('personal_access_tokens')->insert([
-                'tokenable_type' => 'App\Models\User',
-                'tokenable_id'   => $user->user_id,
-                'name'           => 'JavaDesktopClient',
-                'token'          => hash('sha256', $tokenStr), // Store hashed token for safety
-                'abilities'      => json_encode(['*']),
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ]);
+               // Create an official, formatted token string
+               $tokenStr = $userModel->createToken('JavaDesktopClient')->plainTextToken;
+
+
 
             //Return the raw token and user details to the Java Desktop Application
             return response()->json([
