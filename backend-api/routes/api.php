@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 -------------------------------------------
 TEMPORARY TEST ROUTES
 -------------------------------------------
+*/
 // Route to see all registered users
      Route::get('/test-users', function() {
          return response()->json(DB::table('users')->get());
@@ -84,4 +85,4 @@ Route::get('/test-assign/{groupId}/{userId}', function($groupId, $userId) {
         'message' => "User {$userId} successfully assigned to Group {$groupId}!"
     ]);
 });
-*/
+

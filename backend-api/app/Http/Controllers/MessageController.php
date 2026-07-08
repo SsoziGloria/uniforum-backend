@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
+use App\Models\MessageExclusion;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class MessageController extends Controller
 {
@@ -14,10 +15,26 @@ class MessageController extends Controller
          */
         public function getTopicMessages($group_id, $topic_id)
         {
+           $userId = Auth::id();
+
             //Look up all messages in the DB that match the requested topic_id
-            //latest() to get the newest messages first
             $messages = Message::where('topic_id', $topic_id)
-                               ->orderBy('posted_at', 'desc')
+                               ->with('sender:user_id,user_name')
+                               ->where(function ($query) use ($userId) {
+                            //Show if the message is completely open to everyone
+                              $query->where('is_restricted', false)
+                            //OR show if the current user is the author (sender always sees their own text)
+                              ->orWhere('sender_id', $userId)
+                            //OR show if it IS restricted, but the user is NOT listed in the exclusions table
+                               ->orWhere(function ($subQuery) use ($userId) {
+                                  $subQuery->where('is_restricted', true)
+                                    ->whereDoesntHave('exclusions', function ($exclusionCheck) use ($userId) {
+                                         $exclusionCheck->where('ex_user_id', $userId); // Matches your model column!
+
+                                          });
+                                    });
+                               })
+                               ->orderBy('posted_at', 'asc')
                                ->get();
 
             //Return the list of messages as a clean JSON response
@@ -36,34 +53,43 @@ class MessageController extends Controller
         //Validate the incoming request data
         $validated = $request->validate([
             'msg_txt'      => 'required|string',
+            'is_restricted'      => 'required|boolean',
+            'excluded_user_ids'  => 'nullable|array',
+            'excluded_user_ids.*'=> 'integer|exists:users,user_id'
         ]);
 
          $sender_id = $request->user()->user_id;
          $sender_id = $request->user()->user_id;
 
         // Save the message into the database
-         DB::table('messages')->insert([
+         $message = Message::create([
                  'topic_id'   => $topic_id,
-                 'sender_id'  => $sender_id,
+                 'sender_id'  => Auth::id(),
                  'msg_txt'    => $validated['msg_txt'],
                  'is_synced'  => true,
-                 'is_restricted' => false,
+                 'is_restricted' => $request->is_restricted,
                  'posted_at'  => now(),
              ]);
+             if ($request->is_restricted && $request->has('excluded_user_ids')) {
+                     foreach ($request->excluded_user_ids as $excludedId) {
+                       MessageExclusion::create([
+                             'msg_id'     => $message->msg_id,
+                             'ex_user_id' => $excludedId // Maps precisely to your ex_user_id column
+                             ]);
+                         }
+                     }
+              //so that broadcaster has user_name attached
+             $message->load('sender:user_id,user_name');
 
         //Fire the Event, triggers Laravel Reverb to broadcast it in real-time
 
-         event(new MessageSent(
-               $topic_id,
-               $sender_id,
-               $validated['msg_txt']
-           ));
+         event(new MessageSent($message));
 
            return response()->json([
                'status' => 'Success',
-               'message' => 'Message stored and broadcasted successfully!'
+               'message' => 'Message stored and broadcasted successfully!',
+               'data'    => $message->load('sender:user_id,user_name')
            ], 201);
     }
-
 
 }

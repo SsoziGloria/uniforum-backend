@@ -16,4 +16,11 @@ class MessageExclusion extends Model
     {
        return $this->belongsTo(Message::class, 'msg_id', 'msg_id');
     }
+/**
+     * Relationship: The user who is blocked by this exclusion record.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'ex_user_id', 'user_id');
+    }
 }
