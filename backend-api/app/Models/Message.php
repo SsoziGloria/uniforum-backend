@@ -11,6 +11,7 @@ class Message extends Model
     protected $primaryKey = 'msg_id';
     public $timestamps = false;
     protected $fillable = ['topic_id', 'sender_id', 'msg_txt', 'is_synced', 'is_restricted', 'posted_at'];
+    protected $casts = [ 'is_synced' => 'boolean', 'is_restricted' => 'boolean', 'posted_at' => 'datetime'];
 
     public function topic(): BelongsTo
     {
@@ -20,5 +21,14 @@ class Message extends Model
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id', 'user_id');
+    }
+
+    /**
+     * Relationship: Get all exclusion records for this message.
+     */
+    public function exclusions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        // Points to MessageExclusion model using custom msg_id primary key
+        return $this->hasMany(MessageExclusion::class, 'msg_id', 'msg_id');
     }
 }

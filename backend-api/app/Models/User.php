@@ -11,10 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
-
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $primaryKey = 'user_id';
 
@@ -51,5 +48,13 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+/**
+     * Relationship: A user has sent many messages.
+     */
+    public function messages(): HasMany
+    {
+        // Points to the 'sender_id' column on your messages table
+        return $this->hasMany(Message::class, 'sender_id', 'user_id');
     }
 }
