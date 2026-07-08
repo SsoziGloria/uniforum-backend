@@ -10,9 +10,9 @@ class TopicController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index($groupId)
     {
-        $topics = Topic::all();
+        $topics = Topic::where('group_id', $groupId)->get();
 
         return response()->json([
                     'success' => true,
@@ -23,20 +23,29 @@ class TopicController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, $groupId)
     {
         // Validate that the topic has a name and belongs to an existing group
             $validated = $request->validate([
-                'group_id' => 'required|exists:groups,group_id',
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string'
             ]);
 
             //Create and save the topic
-            $topic = Topic::create($validated);
+            $topic = Topic::create([
+            'group_id' => $groupId,
+            'title'    => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'created_by' => $request->user()->user_id,
+            'created_at'  => now(),
+            ]);
 
             // Return the created topic
-            return response()->json($topic, 201);
+            return response()->json([
+            'success' => true,
+            'message' => 'Topic created successfully!',
+            'data' => $topic
+            ], 201);
     }
 
     /**

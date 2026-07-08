@@ -18,36 +18,41 @@ Route::post('/register', [AuthController::class, 'register']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Forum Routes (Requires Auth & Group Membership Verification)
+| Protected Forum Routes (Requires Auth )
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    // --- 1. GROUPS MANAGEMENT ---
+    // --- GROUPS MANAGEMENT ---
     // Get all groups the student belongs to
     Route::get('/groups', [GroupController::class, 'index']);
     // Create a new academic group (if allowed)
     Route::post('/groups', [GroupController::class, 'store']);
-    // Add member endpoint (Protects it so only current group members can add others!)
+/*
+      ----------------------------------------------------
+      Requires Auth &  Group Membership Verification
+      ----------------------------------------------------
+*/
+    // Add member endpoint (only current group members can add others)
+
     Route::middleware(['group.member'])->group(function () {
-    Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
+      Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
+
+      // --- TOPICS MANAGEMENT ---
+      // Fetch topics inside a specific group - only accessible if you are in that group
+      Route::get('/groups/{group}/topics', [TopicController::class, 'index']);
+      // Create a new topic inside a specific group
+      Route::post('/groups/{group}/topics', [TopicController::class, 'store']);
+
+      // --- MESSAGES ---
+      // Get past messages belonging to a specific topic inside a group
+      Route::get('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'getTopicMessages']);
+      // Post a message inside a specific group topic (Triggers WebSocket broadcast)
+      Route::post('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'store']);
         });
 
-
-    // --- 2. TOPICS MANAGEMENT ---
-    // Fetch topics inside a specific group - only accessible if you are in that group
-    Route::get('/groups/{group}/topics', [TopicController::class, 'index']);
-    // Create a new topic inside a specific group
-    Route::post('/groups/{group}/topics', [TopicController::class, 'store']);
-
-
-    // --- 3. MESSAGES & CHAT ENGINE ---
-    // Get past messages belonging to a specific topic inside a group
-    Route::get('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'getTopicMessages']);
-    // Post a message inside a specific group topic (Triggers WebSocket broadcast)
-    Route::post('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'store']);
-
 });
+
 /*
 -------------------------------------------
 TEMPORARY TEST ROUTES
