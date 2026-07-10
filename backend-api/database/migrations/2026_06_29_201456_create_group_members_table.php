@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('group_members', function (Blueprint $table) {
          $table->id('member_id'); // Unique identifier
          $table->foreignId('group_id')->constrained('groups', 'group_id')->onDelete('cascade'); // Links to id in groups table
-         $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade'); // Links to id in user table
+         $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Links to id in user table
          $table->timestamp('joined_at')->useCurrent(); // Date they entered the group
          $table->timestamp('last_activity')->nullable(); // Tracks user engagement to calculate inactivity warnings
         });
