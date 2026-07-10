@@ -6,6 +6,7 @@ use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\GroupMember;
+use Illuminate\Http\JsonResponse;
 
 class GroupController extends Controller
 {
@@ -84,7 +85,7 @@ class GroupController extends Controller
             $validated = $request->validate([
                 'email' => 'required|email'
             ]);
-
+             $groupIdClean = is_object($groupId) ? $groupId->group_id : $groupId;
             // Find the user by email
             $userToAdd = DB::table('users')->where('email', $validated['email'])->first();
 
@@ -97,7 +98,7 @@ class GroupController extends Controller
 
             // Check if they are already in the group
             $alreadyMember = DB::table('group_members')
-                ->where('group_id', $groupId)
+                ->where('group_id', $groupIdClean)
                 ->where('user_id', $userToAdd->user_id)
                 ->exists();
 
@@ -110,7 +111,7 @@ class GroupController extends Controller
 
             // Add them to the group
             DB::table('group_members')->insert([
-                'group_id' => $groupId,
+                'group_id' => $groupIdClean,
                 'user_id'  => $userToAdd->user_id
             ]);
 
@@ -121,6 +122,15 @@ class GroupController extends Controller
         }
 
 
+             // Get a list of all verified members in a group.
+            public function getMembers(Group $group): JsonResponse
+            {
+               return response()->json([
+                       'group_id' => $group->group_id,
+                       'group_name' => $group->group_name, // If you have a name column
+                       'members' => $group->members()->select('users.user_id', 'users.user_name')->get()
+                   ]);
+            }
     /**
      * Display the specified resource.
      */

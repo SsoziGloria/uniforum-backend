@@ -16,21 +16,28 @@ class CheckGroupMembership
      */
     public function handle(Request $request, Closure $next): Response
     {
+   /*
+     dd([
+             'URL_Group_ID' => $request->route('group')->group_id ?? $request->route('group'),
+             'Auth_User_ID' => $request->user()->user_id
+         ]);
+         */
         //Get the authenticated student
         $user = $request->user();
 
         //Extract the group ID parameter from the API URL route
-        $groupId = $request->route('group');
+        $group = $request->route('group');
+        $groupId = is_object($group) ? $group->group_id : $group;
 
         // Safety check to ensure a user is logged in and a group parameter exists
         if (!$user || !$groupId) {
             return response()->json(['error' => 'Unauthorized or invalid route execution.'], 401);
         }
 
-        //Query the group_members table using your custom user_id primary key
+        //Query the group_members table using custom user_id primary key
         $isMember = DB::table('group_members')
             ->where('group_id', $groupId)
-            ->where('user_id', $user->user_id) // Points cleanly to your custom user_id
+            ->where('user_id', $user->user_id)
             ->exists();
 
         // If they are not a member of this specific group, deny access

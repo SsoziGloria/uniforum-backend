@@ -22,4 +22,11 @@ class Group extends Model
     {
        return $this->hasMany(Topic::class, 'group_id', 'group_id');
     }
+
+    public function members()
+    {
+        //links Groups to Users using group_members table
+        return $this->belongsToMany(User::class, 'group_members', 'group_id', 'user_id');
+
+    }
 }
