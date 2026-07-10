@@ -16,7 +16,7 @@ return new class extends Migration
            $table->foreignId('group_id')->constrained('groups', 'group_id')->onDelete('cascade'); // Links to id in the group table
            $table->string('title', 200); // Name of topic thread
            $table->string('ml_category', 100)->nullable(); // The category automatically assigned by the machine learning model
-           $table->foreignId('created_by')->constrained('users', 'user_id')->onDelete('cascade'); // User who started the topic
+           $table->foreignId('created_by')->constrained('users')->onDelete('cascade'); // User who started the topic
            $table->timestamp('created_at')->useCurrent(); // When the topic thread was started
         });
     }

@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('user_warnings', function (Blueprint $table) {
            $table->id('warning_id'); // Unique identifier
-           $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade'); // Points to the non-compliant user profile receiving the warning
-           $table->foreignId('issued_by')->constrained('users', 'user_id')->onDelete('cascade'); // Tracks the specific group admin who authorized the warning
+           $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Points to the non-compliant user profile receiving the warning
+           $table->foreignId('issued_by')->constrained('users')->onDelete('cascade'); // Tracks the specific group admin who authorized the warning
            $table->string('warning_reason', 255); // Details like ‘Inactivity warning’
            $table->timestamp('issued_at')->useCurrent(); // The exact date and time the warning hit the user
         });

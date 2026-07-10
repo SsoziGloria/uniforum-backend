@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('groups', function (Blueprint $table) {
             $table->id('group_id');
             $table->string('group_name', 100);
-            $table->foreignId('created_by')->constrained('users', 'user_id')->onDelete('cascade');
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps(); //Automatically creates created_at and updated_at
         });
     }
