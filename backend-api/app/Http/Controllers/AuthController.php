@@ -29,7 +29,7 @@ class AuthController extends Controller
 
            // Use Eloquent to generate a valid Sanctum Token
                // Fetch the User model instance using your custom primary key
-               $userModel = \App\Models\User::find($user->user_id);
+               $userModel = \App\Models\User::find($user->id);
 
                // Create an official, formatted token string
                $tokenStr = $userModel->createToken('JavaDesktopClient')->plainTextToken;
@@ -42,9 +42,9 @@ class AuthController extends Controller
                 'message' => 'Authentication successful!',
                 'token' => $tokenStr, // The Java application captures and saves this string
                 'user' => [
-                    'user_id'   => $user->user_id,
-                    'user_name' => $user->user_name,
-                    'role'      => $user->role,
+                    'user_id'   => $user->id,
+                    'user_name' => $user->name,
+                   // 'role'      => $user->role,
                     'email'     => $user->email
                 ]
             ], 200);
@@ -71,12 +71,12 @@ class AuthController extends Controller
            //Insert the new student profile into your users table
            // Note: We use Hash::make() so the password is securely encrypted!
            $userId = DB::table('users')->insertGetId([
-               'user_name'  => $validated['user_name'],
+               'name'  => $validated['user_name'],
                'email'      => $validated['email'],
                'password'   => Hash::make($validated['password']),
-               'role'       => 'student', // Defaults new self-registrations to student
-               'status'     => 'active',
-               'online'     => false,
+               //'role'       => 'student', // Defaults new self-registrations to student
+               //'status'     => 'active',
+               //'online'     => false,
                'created_at' => now(),
                'updated_at' => now(),
            ]);

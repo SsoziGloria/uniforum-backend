@@ -37,7 +37,7 @@ class CheckGroupMembership
         //Query the group_members table using custom user_id primary key
         $isMember = DB::table('group_members')
             ->where('group_id', $groupId)
-            ->where('user_id', $user->user_id)
+            ->where('user_id', $user->id)
             ->exists();
 
         // If they are not a member of this specific group, deny access

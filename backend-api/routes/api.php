@@ -37,6 +37,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::middleware(['group.member'])->group(function () {
       Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
+      //The route to handle group role changes
+      Route::post('/groups/{group}/change-role', [GroupController::class, 'changeMemberRole']);
+      //Route to handle removing of members
+      Route::delete('/groups/{group}/remove-member', [GroupController::class, 'removeMember']);
 
       // --- TOPICS MANAGEMENT ---
       // Fetch topics inside a specific group - only accessible if you are in that group
