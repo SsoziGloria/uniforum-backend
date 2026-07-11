@@ -87,7 +87,7 @@ class GroupController extends Controller
             $validated = $request->validate([
                 'email' => 'required|email'
             ]);
-             $groupIdClean = is_object($groupId) ? $groupId->group_id : $groupId;
+             $groupIdClean = is_object($groupId) ? $groupId->id : $groupId;
             // Find the user by email
             $userToAdd = DB::table('users')->where('email', $validated['email'])->first();
 
@@ -96,6 +96,20 @@ class GroupController extends Controller
                     'status'  => 'Error',
                     'message' => 'No student found with that email address.'
                 ], 404);
+            }
+        $authenticatedUserId = $request->user()->id;
+        // check if person adding member is an admin
+            $isAdmin = DB::table('group_members')
+                ->where('group_id', $groupIdClean)
+                ->where('user_id', $authenticatedUserId)
+                ->where('role', 'admin')
+                ->exists();
+
+            if (!$isAdmin) {
+                return response()->json([
+                    'status'  => 'Error',
+                    'message' => 'Unauthorized. Only group administrators can add new members.'
+                ], 403);
             }
 
             // Check if they are already in the group
