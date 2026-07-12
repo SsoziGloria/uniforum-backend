@@ -13,23 +13,23 @@ class MessageController extends Controller
        /**
         * Fetch all messages belonging to a specific topic.
          */
-        public function getTopicMessages($group_id, $topic_id)
-        {
-           $userId = Auth::id();
+   public function getTopicMessages($group_id, $topic_id)
+     {
+       $userId = Auth::id();
 
-            //Look up all messages in the DB that match the requested topic_id
-            $messages = Message::where('topic_id', $topic_id)
-                               ->with('sender:user_id,user_name')
-                               ->where(function ($query) use ($userId) {
-                            //Show if the message is completely open to everyone
+       //Look up all messages in the DB that match the requested topic_id
+        $messages = Message::where('topic_id', $topic_id)
+                          ->with('sender:user_id,user_name')
+                          ->where(function ($query) use ($userId) {
+              //Show if the message is completely open to everyone
                               $query->where('is_restricted', false)
-                            //OR show if the current user is the author (sender always sees their own text)
-                              ->orWhere('sender_id', $userId)
-                            //OR show if it IS restricted, but the user is NOT listed in the exclusions table
+              //OR show if the current user is the author (sender always sees their own text)
+                               ->orWhere('sender_id', $userId)
+              //OR show if it IS restricted, but the user is NOT listed in the exclusions table
                                ->orWhere(function ($subQuery) use ($userId) {
-                                  $subQuery->where('is_restricted', true)
-                                    ->whereDoesntHave('exclusions', function ($exclusionCheck) use ($userId) {
-                                         $exclusionCheck->where('ex_user_id', $userId); // Matches your model column!
+                               $subQuery->where('is_restricted', true)
+                               ->whereDoesntHave('exclusions', function ($exclusionCheck) use ($userId) {
+                               $exclusionCheck->where('ex_user_id', $userId); // Matches your model column!
 
                                           });
                                     });
