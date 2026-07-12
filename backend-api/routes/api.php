@@ -37,6 +37,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::middleware(['group.member'])->group(function () {
       Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
+      //The route to handle group role changes
+      Route::post('/groups/{group}/change-role', [GroupController::class, 'changeMemberRole']);
+      //Route to handle removing of members
+      Route::delete('/groups/{group}/remove-member', [GroupController::class, 'removeMember']);
 
       // --- TOPICS MANAGEMENT ---
       // Fetch topics inside a specific group - only accessible if you are in that group
@@ -49,40 +53,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
       Route::get('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'getTopicMessages']);
       // Post a message inside a specific group topic (Triggers WebSocket broadcast)
       Route::post('/groups/{group}/topics/{topic}/messages', [MessageController::class, 'store']);
+
+      // --- GROUP MEMBER ---
+      // Fetch all members belonging to a specific group
+      Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
         });
 
 });
 
-/*
--------------------------------------------
-TEMPORARY TEST ROUTES
--------------------------------------------
-*/
-// Route to see all registered users
-     Route::get('/test-users', function() {
-         return response()->json(DB::table('users')->get());
-     });
-
-     // Route to see all academic groups
-     Route::get('/test-groups', function() {
-         return response()->json(DB::table('groups')->get());
-     });
-
-     // Route to see all group memberships (the pivot table records)
-     Route::get('/test-members', function() {
-         return response()->json(DB::table('group_members')->get());
-     });
-// Route to manually assign a user to a group for testing
-Route::get('/test-assign/{groupId}/{userId}', function($groupId, $userId) {
-    DB::table('group_members')->insert([
-        'group_id'   => $groupId,
-        'user_id'    => $userId,
-
-    ]);
-
-    return response()->json([
-        'status'  => 'Success',
-        'message' => "User {$userId} successfully assigned to Group {$groupId}!"
-    ]);
-});
 
