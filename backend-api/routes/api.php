@@ -6,7 +6,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\CommentController;
 /*
 |--------------------------------------------------------------------------
 | Public Authentication Routes

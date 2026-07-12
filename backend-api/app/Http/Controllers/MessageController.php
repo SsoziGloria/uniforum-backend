@@ -19,7 +19,7 @@ class MessageController extends Controller
 
        //Look up all messages in the DB that match the requested topic_id
         $messages = Message::where('topic_id', $topic_id)
-                          ->with('sender:user_id,user_name')
+                          ->with('sender:id,name')
                           ->where(function ($query) use ($userId) {
               //Show if the message is completely open to everyone
                               $query->where('is_restricted', false)
@@ -55,16 +55,16 @@ class MessageController extends Controller
             'msg_txt'      => 'required|string',
             'is_restricted'      => 'required|boolean',
             'excluded_user_ids'  => 'nullable|array',
-            'excluded_user_ids.*'=> 'integer|exists:users,user_id'
+            'excluded_user_ids.*'=> 'integer|exists:users,id'
         ]);
 
-         $sender_id = $request->user()->user_id;
-         $sender_id = $request->user()->user_id;
+         $userId = $request->user()->user_id ?? $request->user()->id;
+
 
         // Save the message into the database
          $message = Message::create([
                  'topic_id'   => $topic_id,
-                 'sender_id'  => Auth::id(),
+                 'sender_id'  => $userId,
                  'msg_txt'    => $validated['msg_txt'],
                  'is_synced'  => true,
                  'is_restricted' => $request->is_restricted,
@@ -78,8 +78,9 @@ class MessageController extends Controller
                              ]);
                          }
                      }
-              //so that broadcaster has user_name attached
-             $message->load('sender:user_id,user_name');
+
+             // Load sender relation so the WebSocket broadcaster has the name attached
+                 $message->load('sender:id,name');
 
         //Fire the Event, triggers Laravel Reverb to broadcast it in real-time
 
@@ -88,7 +89,7 @@ class MessageController extends Controller
            return response()->json([
                'status' => 'Success',
                'message' => 'Message stored and broadcasted successfully!',
-               'data'    => $message->load('sender:user_id,user_name')
+               'data'    => $message->load('sender:id,name')
            ], 201);
     }
 
