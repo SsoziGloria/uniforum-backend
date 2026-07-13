@@ -23,6 +23,14 @@ Route::post('/register', [AuthController::class, 'register']);
 */
 Route::middleware(['auth:sanctum'])->group(function () {
 
+  // This allows authenticated users to securely authorize their private channels.
+      Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+              // Force the broadcaster to use the user authenticated by Sanctum
+              $request->setUserResolver(fn () => auth('sanctum')->user());
+
+              return Broadcast::auth($request);
+          });
+
     // --- GROUPS MANAGEMENT ---
     // Get all groups the student belongs to
     Route::get('/groups', [GroupController::class, 'index']);

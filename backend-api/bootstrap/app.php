@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
          'group.member' => \App\Http\Middleware\CheckGroupMembership::class,
              ]);
 
+           // LARAVEL TO USE SANCTUM FOR BROADCAST AUTHENTICATION
+                   $middleware->api(prepend: [
+                       // This ensures Sanctum handles state and tokens seamlessly
+                       \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+                   ]);
+
              // Redirect unauthenticated requests to return JSON instead of looking for a login page
                  $middleware->redirectGuestsTo(fn () => response()->json(['error' => 'Unauthenticated.'], 401));
     })
