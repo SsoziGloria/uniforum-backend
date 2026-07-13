@@ -1,158 +1,368 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Student Dashboard</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.dashboard')
 
 
-<body class="bg-gray-100">
+@section('title', 'Student Dashboard')
 
 
-<div class="min-h-screen flex">
-
-
-    <!-- Sidebar -->
-
-    <aside class="w-64 bg-blue-700 text-white p-6">
-
-        <h1 class="text-2xl font-bold mb-10">
-            Smart Forum
-        </h1>
-
-
-        <nav class="space-y-4">
-
-            <a href="#" class="block hover:text-gray-200">
-                Dashboard
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Discussions
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Quizzes
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Recommendations
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Profile
-            </a>
-
-        </nav>
-
-    </aside>
+@section('heading')
+Student Dashboard
+@endsection
 
 
 
-    <!-- Main -->
-
-    <main class="flex-1 p-10">
+@section('content')
 
 
-        <h2 class="text-4xl font-bold text-gray-800 mb-2">
-            Welcome back, {{ Auth::user()->name ?? 'Student' }}
-        </h2>
+<!-- Welcome Banner -->
 
-        <p class="text-gray-600 mb-8">
-            Continue learning, discussing and growing.
+<div class="bg-blue-600 rounded-3xl p-8 text-white mb-8">
+
+    <h1 class="text-3xl font-bold">
+        Welcome back, Student 👋
+    </h1>
+
+
+    <p class="mt-3 text-blue-100 max-w-xl">
+        Stay connected with your university discussions,
+        discover recommended topics and improve your participation score.
+    </p>
+
+
+    <button class="mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold">
+        Explore Discussions
+    </button>
+
+</div>
+
+
+
+
+<!-- Statistics Cards -->
+
+<div class="grid md:grid-cols-4 gap-6">
+
+
+    <div class="bg-white rounded-2xl border p-6">
+
+        <div class="text-3xl mb-3">
+            💬
+        </div>
+
+        <p class="text-sm text-slate-500">
+            Questions Asked
         </p>
 
+        <h3 class="text-3xl font-bold mt-2">
+            24
+        </h3>
 
-
-        <!-- Cards -->
-
-        <div class="grid grid-cols-3 gap-6">
-
-
-            <div class="bg-white p-6 rounded-xl shadow">
-
-                <h3 class="text-xl font-semibold">
-                    Discussions
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    12 Active discussions
-                </p>
-
-            </div>
-
-
-
-            <div class="bg-white p-6 rounded-xl shadow">
-
-                <h3 class="text-xl font-semibold">
-                    Quizzes
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    5 Available quizzes
-                </p>
-
-            </div>
+    </div>
 
 
 
 
-            <div class="bg-white p-6 rounded-xl shadow">
+    <div class="bg-white rounded-2xl border p-6">
 
-                <h3 class="text-xl font-semibold">
-                    AI Recommendations
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    New topics suggested for you
-                </p>
-
-            </div>
-
-
+        <div class="text-3xl mb-3">
+            ⭐
         </div>
 
+        <p class="text-sm text-slate-500">
+            Participation Score
+        </p>
+
+        <h3 class="text-3xl font-bold mt-2">
+            85%
+        </h3>
+
+    </div>
 
 
-        <!-- Recent Discussions -->
-
-        <div class="bg-white rounded-xl shadow p-6 mt-8">
-
-            <h3 class="text-2xl font-bold mb-4">
-                Recent Discussions
-            </h3>
 
 
-            <ul class="space-y-3">
+    <div class="bg-white rounded-2xl border p-6">
 
-                <li>
-                    How does machine learning work?
-                </li>
-
-                <li>
-                    Software engineering best practices
-                </li>
-
-                <li>
-                    Database normalization concepts
-                </li>
-
-            </ul>
-
+        <div class="text-3xl mb-3">
+            📚
         </div>
 
+        <p class="text-sm text-slate-500">
+            Topics Following
+        </p>
 
-    </main>
+        <h3 class="text-3xl font-bold mt-2">
+            12
+        </h3>
+
+    </div>
+
+
+
+
+    <div class="bg-white rounded-2xl border p-6">
+
+        <div class="text-3xl mb-3">
+            📝
+        </div>
+
+        <p class="text-sm text-slate-500">
+            Pending Quizzes
+        </p>
+
+        <h3 class="text-3xl font-bold mt-2">
+            3
+        </h3>
+
+    </div>
 
 
 </div>
 
 
-</body>
-</html>
+
+
+
+<!-- Main Content -->
+
+<div class="grid lg:grid-cols-3 gap-6 mt-8">
+
+
+
+<!-- Recommended Topics -->
+
+<div class="lg:col-span-2 bg-white rounded-2xl border p-6">
+
+
+<div class="flex justify-between items-center mb-5">
+
+
+<h2 class="text-xl font-bold">
+Recommended Topics
+</h2>
+
+
+<span class="text-sm text-blue-600">
+AI Powered
+</span>
+
+
+</div>
+
+
+
+<div class="space-y-4">
+
+
+<div class="p-4 bg-slate-50 rounded-xl flex justify-between">
+
+<div>
+
+<h3 class="font-semibold">
+Laravel Authentication
+</h3>
+
+<p class="text-sm text-slate-500">
+23 students discussing
+</p>
+
+</div>
+
+
+<button class="text-blue-600">
+View
+</button>
+
+
+</div>
+
+
+
+
+<div class="p-4 bg-slate-50 rounded-xl flex justify-between">
+
+<div>
+
+<h3 class="font-semibold">
+Machine Learning Basics
+</h3>
+
+<p class="text-sm text-slate-500">
+18 students discussing
+</p>
+
+</div>
+
+
+<button class="text-blue-600">
+View
+</button>
+
+
+</div>
+
+
+
+
+<div class="p-4 bg-slate-50 rounded-xl flex justify-between">
+
+<div>
+
+<h3 class="font-semibold">
+Software Design Patterns
+</h3>
+
+<p class="text-sm text-slate-500">
+31 students discussing
+</p>
+
+</div>
+
+
+<button class="text-blues-600">
+View
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Notifications -->
+
+<div class="bg-white rounded-2xl border p-6">
+
+
+<h2 class="text-xl font-bold mb-5">
+Notifications
+</h2>
+
+
+<div class="space-y-4">
+
+
+<div class="border-l-4 border-blue-600 pl-4">
+
+<p class="font-medium">
+New quiz available
+</p>
+
+<p class="text-sm text-slate-500">
+Database Systems Quiz
+</p>
+
+</div>
+
+
+
+<div class="border-l-4 border-green-500 pl-4">
+
+<p class="font-medium">
+Your question was answered
+</p>
+
+<p class="text-sm text-slate-500">
+Operating Systems
+</p>
+
+</div>
+
+
+
+<div class="border-l-4 border-yellow-500 pl-4">
+
+<p class="font-medium">
+Participation reminder
+</p>
+
+<p class="text-sm text-slate-500">
+Engage more in discussions
+</p>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- Recent Activity -->
+
+
+<div class="mt-8 bg-white rounded-2xl border p-6">
+
+
+<h2 class="text-xl font-bold mb-5">
+Recent Activity
+</h2>
+
+
+<div class="space-y-4">
+
+
+<div class="flex justify-between">
+
+<span>
+Answered "How does Laravel middleware work?"
+</span>
+
+<span class="text-sm text-slate-500">
+2 hrs ago
+</span>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Joined Database Optimization topic
+</span>
+
+<span class="text-sm text-slate-500">
+Yesterday
+</span>
+
+</div>
+
+
+
+<div class="flex justify-between">
+
+<span>
+Completed Software Engineering quiz
+</span>
+
+<span class="text-sm text-slate-500">
+3 days ago
+</span>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+@endsection

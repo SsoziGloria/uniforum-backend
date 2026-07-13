@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 Route::middleware([
     'auth:sanctum',
@@ -18,12 +18,14 @@ Route::middleware([
 
 Route::get('/student-dashboard', function () {
     return view('dashboard.student');
-})->middleware(['auth'])->name('student.dashboard');
+})->name('student.dashboard');
+
 
 Route::get('/lecturer-dashboard', function () {
     return view('dashboard.lecturer');
-})->middleware(['auth'])->name('lecturer.dashboard');
+})->name('lecturer.dashboard');
+
 
 Route::get('/admin-dashboard', function () {
     return view('dashboard.admin');
-})->middleware(['auth'])->name('admin.dashboard');
+})->name('admin.dashboard');

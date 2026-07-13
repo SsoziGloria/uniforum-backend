@@ -1,126 +1,278 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Admin Dashboard</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@extends('layouts.dashboard')
 
 
-<body class="bg-gray-100">
+@section('title', 'Admin Dashboard')
 
 
-<div class="min-h-screen flex">
-
-
-    <aside class="w-64 bg-blue-700 text-white p-6">
-
-        <h1 class="text-2xl font-bold mb-10">
-            Smart Forum
-        </h1>
-
-
-        <nav class="space-y-4">
-
-            <a href="#" class="block hover:text-gray-200">
-                Dashboard
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Users
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Discussions
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Reports
-            </a>
-
-            <a href="#" class="block hover:text-gray-200">
-                Settings
-            </a>
-
-        </nav>
-
-
-    </aside>
+@section('heading')
+Admin Dashboard
+@endsection
 
 
 
-    <main class="flex-1 p-10">
+@section('content')
 
 
-        <h2 class="text-4xl font-bold text-gray-800 mb-2">
-            Admin Dashboard
-        </h2>
+<div class="bg-blue-600 rounded-3xl p-8 text-white mb-8">
 
 
-        <p class="text-gray-600 mb-8">
-            Manage the Smart Discussion Forum system.
-        </p>
+<h1 class="text-3xl font-bold">
+Welcome Administrator 👋
+</h1>
 
 
+<p class="mt-3 text-blue-100 max-w-2xl">
+
+Monitor platform activity, manage users, view statistics,
+and maintain a healthy discussion environment.
+
+</p>
 
 
-        <div class="grid grid-cols-3 gap-6">
+<button class="mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold">
 
+Manage Users
 
-            <div class="bg-white p-6 rounded-xl shadow">
-
-                <h3 class="text-xl font-semibold">
-                    Users
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    Manage students and lecturers
-                </p>
-
-            </div>
-
-
-
-            <div class="bg-white p-6 rounded-xl shadow">
-
-                <h3 class="text-xl font-semibold">
-                    Content
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    Monitor discussions and quizzes
-                </p>
-
-            </div>
-
-
-
-            <div class="bg-white p-6 rounded-xl shadow">
-
-                <h3 class="text-xl font-semibold">
-                    System
-                </h3>
-
-                <p class="text-gray-500 mt-2">
-                    Configure platform settings
-                </p>
-
-            </div>
-
-
-        </div>
-
-
-    </main>
+</button>
 
 
 </div>
 
 
-</body>
 
-</html>
+
+
+<div class="grid md:grid-cols-4 gap-6">
+
+
+
+<div class="bg-white rounded-2xl border p-6">
+
+<div class="text-3xl mb-3">
+👥
+</div>
+
+<p class="text-sm text-slate-500">
+Total Users
+</p>
+
+<h3 class="text-3xl font-bold">
+1240
+</h3>
+
+</div>
+
+
+
+
+<div class="bg-white rounded-2xl border p-6">
+
+<div class="text-3xl mb-3">
+💬
+</div>
+
+<p class="text-sm text-slate-500">
+Messages Today
+</p>
+
+<h3 class="text-3xl font-bold">
+5420
+</h3>
+
+</div>
+
+
+
+
+<div class="bg-white rounded-2xl border p-6">
+
+<div class="text-3xl mb-3">
+⚠️
+</div>
+
+<p class="text-sm text-slate-500">
+Warnings Issued
+</p>
+
+<h3 class="text-3xl font-bold">
+16
+</h3>
+
+</div>
+
+
+
+
+<div class="bg-white rounded-2xl border p-6">
+
+<div class="text-3xl mb-3">
+🚫
+</div>
+
+<p class="text-sm text-slate-500">
+Blacklisted Users
+</p>
+
+<h3 class="text-3xl font-bold">
+4
+</h3>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<div class="grid lg:grid-cols-3 gap-6 mt-8">
+
+
+
+<!-- Statistics -->
+
+
+<div class="lg:col-span-2 bg-white rounded-2xl border p-6">
+
+
+<h2 class="text-xl font-bold mb-5">
+Group Statistics
+</h2>
+
+
+
+<div class="space-y-5">
+
+
+
+<div class="flex justify-between p-4 bg-slate-50 rounded-xl">
+
+<span>
+Software Engineering
+</span>
+
+<span class="font-semibold">
+560 members
+</span>
+
+</div>
+
+
+
+
+<div class="flex justify-between p-4 bg-slate-50 rounded-xl">
+
+<span>
+Computer Science
+</span>
+
+<span class="font-semibold">
+430 members
+</span>
+
+</div>
+
+
+
+
+<div class="flex justify-between p-4 bg-slate-50 rounded-xl">
+
+<span>
+Information Systems
+</span>
+
+<span class="font-semibold">
+250 members
+</span>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Admin Actions -->
+
+
+<div class="bg-white rounded-2xl border p-6">
+
+
+<h2 class="text-xl font-bold mb-5">
+Administration
+</h2>
+
+
+<div class="space-y-3">
+
+
+<button class="w-full text-left p-4 bg-blue-50 rounded-xl text-blue-700">
+👥 Manage Members
+</button>
+
+
+<button class="w-full text-left p-4 bg-blue-50 rounded-xl text-blue-700">
+📊 Platform Reports
+</button>
+
+
+<button class="w-full text-left p-4 bg-blue-50 rounded-xl text-blue-700">
+⚙️ System Settings
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<div class="mt-8 bg-white rounded-2xl border p-6">
+
+
+<h2 class="text-xl font-bold mb-5">
+Recent Admin Activity
+</h2>
+
+
+<ul class="space-y-4">
+
+
+<li>
+New member registration approved
+</li>
+
+
+<li>
+Inactive user warning issued
+</li>
+
+
+<li>
+Discussion category updated
+</li>
+
+
+</ul>
+
+
+</div>
+
+
+
+@endsection
