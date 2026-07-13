@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -17,7 +19,7 @@ class AuthController extends Controller
             ]);
 
             //Get the user profile manually from the database
-            $user = DB::table('users')->where('email', $validated['email'])->first();
+           $user = User::where('email', $validated['email'])->first();
 
             // Verify user exists and check if the password matches the database hash
             if (!$user || !Hash::check($validated['password'], $user->password)) {
@@ -26,10 +28,6 @@ class AuthController extends Controller
                     'message' => 'Invalid email or password credentials.'
                 ], 401);
             }
-
-           // Use Eloquent to generate a valid Sanctum Token
-               // Fetch the User model instance using your custom primary key
-               $userModel = \App\Models\User::find($user->user_id);
 
                // Create an official, formatted token string
                $tokenStr = $userModel->createToken('JavaDesktopClient')->plainTextToken;
@@ -42,9 +40,9 @@ class AuthController extends Controller
                 'message' => 'Authentication successful!',
                 'token' => $tokenStr, // The Java application captures and saves this string
                 'user' => [
-                    'user_id'   => $user->user_id,
-                    'user_name' => $user->user_name,
-                    'role'      => $user->role,
+                    'user_id'   => $user->id,
+                    'user_name' => $user->name,
+                   // 'role'      => $user->role,
                     'email'     => $user->email
                 ]
             ], 200);
@@ -55,8 +53,13 @@ class AuthController extends Controller
            //Validate the incoming sign-up details
            $validated = $request->validate([
                'user_name' => 'required|string|max:255',
-               'email'     => 'required|email|max:255',
+               'email'     => 'required|email|max:255|unique:users,email',
                'password'  => 'required|string|min:6',
+               'rules_accepted' => 'required|accepted',
+
+               ], [ // Custom error message passed back UI
+               'rules_accepted.required' => 'You must accept the platform rules and guidelines to complete registration.',
+               'rules_accepted.accepted' => 'You must accept the platform rules and guidelines to complete registration.'
            ]);
 
            //Check if a user with this email already exists manually
@@ -69,26 +72,29 @@ class AuthController extends Controller
            }
 
            //Insert the new student profile into your users table
-           // Note: We use Hash::make() so the password is securely encrypted!
-           $userId = DB::table('users')->insertGetId([
-               'user_name'  => $validated['user_name'],
+           //Hash::make() so the password is securely encrypted!
+           $user  = User::create([
+               'name'  => $validated['user_name'],
                'email'      => $validated['email'],
                'password'   => Hash::make($validated['password']),
-               'role'       => 'student', // Defaults new self-registrations to student
-               'status'     => 'active',
-               'online'     => false,
+               //'role'       => 'student', // Defaults new self-registrations to student
+               //'status'     => 'active',
+               //'online'     => false,
+               'rules_accepted' => true,
                'created_at' => now(),
                'updated_at' => now(),
            ]);
+
+           $tokenStr = $user->createToken('JavaDesktopClient')->plainTextToken;
 
            //Return a successful response
            return response()->json([
                'status' => 'Success',
                'message' => 'User account created successfully!',
                'user' => [
-                   'user_id' => $userId,
-                   'user_name' => $validated['user_name'],
-                   'email' => $validated['email'],
+                   'user_id' => $user->id,
+                   'user_name' => $user->name,
+                   'email' => $user->email,
                    'role' => 'student'
                ]
            ], 201);

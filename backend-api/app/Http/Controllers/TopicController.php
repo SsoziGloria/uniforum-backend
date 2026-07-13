@@ -12,7 +12,9 @@ class TopicController extends Controller
      */
     public function index($groupId)
     {
-        $topics = Topic::where('group_id', $groupId)->get();
+        $groupIdClean = is_object($groupId) ? $groupId->id : $groupId;
+        $topics = Topic::where('group_id', $groupIdClean)->orderBy('created_at', 'desc')->get();
+
 
         return response()->json([
                     'success' => true,
@@ -30,13 +32,14 @@ class TopicController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string'
             ]);
+            $groupIdClean = is_object($groupId) ? $groupId->id : $groupId;
 
             //Create and save the topic
             $topic = Topic::create([
-            'group_id' => $groupId,
+            'group_id' => $groupIdClean,
             'title'    => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'created_by' => $request->user()->user_id,
+            'created_by' => $request->user()->id,
             'created_at'  => now(),
             ]);
 
