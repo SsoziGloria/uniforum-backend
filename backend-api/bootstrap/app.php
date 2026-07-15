@@ -23,8 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
                        \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
                    ]);
 
-             // Redirect unauthenticated requests to return JSON instead of looking for a login page
-                 $middleware->redirectGuestsTo(fn () => response()->json(['error' => 'Unauthenticated.'], 401));
+             // Redirect unauthenticated requests to login page
+                 $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
