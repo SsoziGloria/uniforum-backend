@@ -10,7 +10,7 @@ class GroupMember extends Model
     protected $table = 'group_members';
     protected $primaryKey = 'member_id';
     public $timestamps = false;
-    protected $fillable = ['group_id', 'user_id', 'joined_at', 'last_activity'];
+    protected $fillable = ['group_id', 'user_id', 'role', 'joined_at', 'last_activity'];
 
 
 
