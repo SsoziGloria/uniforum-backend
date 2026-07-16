@@ -12,20 +12,25 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-         $middleware->alias([
-         'group.member' => \App\Http\Middleware\CheckGroupMembership::class,
-             ]);
+   ->withMiddleware(function (Middleware $middleware): void {
 
-           // LARAVEL TO USE SANCTUM FOR BROADCAST AUTHENTICATION
-                   $middleware->api(prepend: [
-                       // This ensures Sanctum handles state and tokens seamlessly
-                       \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-                   ]);
+            // Combined Middleware Aliases (No overwriting!)
+            $middleware->alias([
+                'group.member' => \App\Http\Middleware\CheckGroupMembership::class,
+                'lecturer'     => \App\Http\Middleware\EnsureUserIsLecturer::class,
+            ]);
 
-             // Redirect unauthenticated requests to login page
-                 $middleware->redirectGuestsTo(fn () => route('login'));
-    })
+            // LARAVEL TO USE SANCTUM FOR BROADCAST AUTHENTICATION
+            $middleware->api(prepend: [
+                // This ensures Sanctum handles state and tokens seamlessly
+                \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            ]);
+
+            // Redirect unauthenticated requests to login page
+            $middleware->redirectGuestsTo(fn () => route('login'));
+
+       })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
