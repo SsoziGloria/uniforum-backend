@@ -10,9 +10,13 @@ class GroupMember extends Model
     protected $table = 'group_members';
     protected $primaryKey = 'member_id';
     public $timestamps = false;
-    protected $fillable = ['group_id', 'user_id', 'role', 'joined_at', 'last_activity'];
+    protected $fillable = ['group_id', 'user_id', 'role', 'joined_at', 'last_activity', 'blacklisted_until'];
 
-
+   // Optional casts so Laravel treats timestamps as Carbon date objects automatically
+    protected $casts = [
+     'last_activity' => 'datetime',
+     'blacklisted_until' => 'datetime',
+        ];
 
 
     public function group(): BelongsTo

@@ -7,6 +7,7 @@ use App\Models\MessageExclusion;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use \App\Models\GroupMember;
 
 class MessageController extends Controller
 {
@@ -81,6 +82,18 @@ class MessageController extends Controller
         // Extract raw group ID integer safely from route middleware boundary
         $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int)$group;
 
+        //CHECK IF THE USER IS CURRENTLY BLACKLISTED ===
+         $membership = GroupMember::where('user_id', $userId)
+                    ->where('group_id', $groupId)
+                    ->first();
+
+         if ($membership && $membership->blacklisted_until && Carbon::parse($membership->blacklisted_until)->isFuture()) {
+           return response()->json([
+            'status'  => 'Error',
+             'message' => 'You are temporarily blacklisted from this group due to inactivity and cannot send messages until ' . $membership->blacklisted_until . '.'
+                  ], 403);
+              }
+
         // Save the message directly inside the validated group boundary
         $message = Message::create([
             'group_id'      => $groupId,
@@ -91,6 +104,13 @@ class MessageController extends Controller
             'is_restricted' => $validated['is_restricted'],
             'posted_at'     => now(),
         ]);
+
+        //LAST ACTIVITY UPDATE
+        \App\Models\GroupMember::where('user_id', $userId)
+                    ->where('group_id', $groupId)
+                    ->update([
+                        'last_activity' => now(),
+                    ]);
 
         // Process exclusions if message is set to restricted
         if ($validated['is_restricted'] && $request->has('excluded_user_ids')) {
