@@ -22,7 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-../desktop-client/
 # Laravel
 /storage/framework/views/*
 /storage/framework/sessions/*
