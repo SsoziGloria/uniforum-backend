@@ -84,7 +84,7 @@ Where knowledge meets collaboration.
 
 <p class="text-blue-100">
 
-Join 12,400+ students and educators engaging in meaningful academic discussions every day.
+Join students and lecturers engaging in meaningful academic discussions every day.
 
 </p>
 
@@ -351,7 +351,7 @@ class="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-input-background
 
 <label class="text-sm font-medium">
 
-University Email
+Email
 
 </label>
 
@@ -360,7 +360,7 @@ University Email
 name="email"
 type="email"
 required
-placeholder="you@university.edu"
+placeholder="you@email.com"
 class="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-input-background"
 />
 

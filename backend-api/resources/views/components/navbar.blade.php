@@ -23,19 +23,6 @@
         </a>
 
 
-        <!-- Desktop Navigation -->
-        <nav class="hidden md:flex items-center gap-8">
-
-            @foreach(['Features','About','Pricing','Contact'] as $item)
-
-                <button class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                    {{ $item }}
-                </button>
-
-            @endforeach
-
-        </nav>
-
 
 
         <!-- Desktop CTA -->

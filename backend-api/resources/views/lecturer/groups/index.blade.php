@@ -1,4 +1,4 @@
-@extends('layouts.student')
+@extends('layouts.lecturer')
 
 @section('title', 'My Groups - UniForum')
 
@@ -34,13 +34,13 @@
                 placeholder="Search groups..."
                 class="flex-1 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500">
 
-            <a href="/student/groups/browse"
+            <a href="/lecturer/groups/browse"
                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl">
 
                  Browse Groups
 
             </a>
-            <a href="/student/groups/create"
+            <a href="/lecturer/groups/create"
                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl">
 
              + Create Group
@@ -72,7 +72,7 @@
                     </div>
 
                     <h2 class="mt-5 text-xl font-bold text-slate-900">
-                        BSSE Year II
+                         Year 2 Group
                     </h2>
 
                     <p class="mt-3 text-slate-600">
@@ -85,7 +85,7 @@
                             ● Active today
                         </span>
 
-                        <a href="/student/groups/show"
+                        <a href="/lecturer/groups/show"
                            class="text-blue-600 font-medium hover:underline">
                              Open →
                         </a>
@@ -128,7 +128,7 @@
                             ● 15 New Posts
                         </span>
 
-                        <a href="/student/groups/show"
+                        <a href="/lecturer/groups/show"
                            class="text-blue-600 font-medium hover:underline">
                             Open →
                         </a>
@@ -171,7 +171,7 @@
                             ● 8 New Questions
                         </span>
 
-                        <a href="/student/groups/show"
+                        <a href="/lecturer/groups/show"
                            class="text-blue-600 font-medium hover:underline">
                             Open →
                         </a>

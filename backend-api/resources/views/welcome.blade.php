@@ -57,7 +57,7 @@ and grow together.
 
 <p class="text-lg text-muted-foreground leading-relaxed max-w-md">
 
-A collaborative discussion platform built for students, lecturers, and administrators — powered by AI to keep every conversation meaningful.
+A collaborative discussion platform built for students, lecturers, and administrators, powered by AI to keep every conversation meaningful.
 
 </p>
 
@@ -76,7 +76,7 @@ href="{{ route('register') }}"
 class="flex items-center gap-2 bg-primary text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg"
 >
 
-Get started free
+Get started 
 
 
 <svg class="w-4 h-4"
@@ -116,7 +116,6 @@ Sign in to your account
 
 @foreach([
 'No credit card required',
-'Free for students',
 'GDPR compliant'
 ] as $item)
 
@@ -386,42 +385,6 @@ Post
 
 
 
-<!-- STATS -->
-
-<section class="border-y border-border bg-muted/40">
-
-<div class="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
-
-
-@foreach([
-['50+','Universities'],
-['12K+','Active Students'],
-['98%','Satisfaction Rate'],
-['2.4M','Discussions']
-] as $stat)
-
-
-<div class="text-center">
-
-<p class="text-3xl font-bold text-primary">
-{{ $stat[0] }}
-</p>
-
-<p class="text-sm text-muted-foreground mt-1">
-{{ $stat[1] }}
-</p>
-
-</div>
-
-
-@endforeach
-
-
-</div>
-
-</section>
-
-
  <!-- FEATURES -->
 
 <section class="py-24 px-6 max-w-7xl mx-auto">
@@ -484,19 +447,19 @@ $features = [
 
 [
 'icon'=>'📚',
-'title'=>'Smart Quizzes',
+'title'=>' Quizzes',
 'desc'=>'Auto-graded assessments with instant feedback and performance analytics.'
 ],
 
 [
 'icon'=>'🔔',
-'title'=>'Smart Notifications',
+'title'=>' Notifications',
 'desc'=>'Contextual alerts for replies, deadlines, quiz results, and announcements.'
 ],
 
 [
 'icon'=>'📊',
-'title'=>'Analytics Dashboard',
+'title'=>' Group Statistics',
 'desc'=>'Engagement metrics for lecturers and participation insights for administrators.'
 ]
 
@@ -573,7 +536,7 @@ alt="Students collaborating"
 
 <p class="text-sm font-semibold text-blue-200 uppercase tracking-widest">
 
-Trusted by institutions worldwide
+Trusted by institutions 
 
 </p>
 
@@ -592,7 +555,7 @@ href="{{ route('register') }}"
 class="flex items-center gap-2 bg-white text-primary font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 shadow-lg"
 >
 
-Join your university
+Join us today
 
 →
 
@@ -607,124 +570,6 @@ Join your university
 
 </section>
 
-
-
-<!-- TESTIMONIALS -->
-
-
-<section class="py-24 px-6 max-w-7xl mx-auto">
-
-
-<div class="text-center mb-14 space-y-3">
-
-
-<p class="text-sm font-semibold text-primary uppercase tracking-widest">
-
-Testimonials
-
-</p>
-
-
-<h2 class="text-4xl font-bold text-foreground">
-
-Loved by educators and students
-
-</h2>
-
-
-</div>
-
-
-
-
-
-<div class="grid md:grid-cols-3 gap-6">
-
-
-@php
-
-$testimonials = [
-
-[
-'name'=>'Prof. Amelia Hartley',
-'role'=>'Dept. of Computer Science, MIT',
-'quote'=>'UniForum transformed how my students engage with course material. The AI recommendations alone have improved assignment quality by 40%.'
-],
-
-[
-'name'=>'Marcus Thompson',
-'role'=>'BSc. Software Engineering, Year 3',
-'quote'=>'I used to email my professor every question. Now the forum has my answer before I even finish typing.'
-],
-
-[
-'name'=>'Dr. Priya Nair',
-'role'=>'Academic Director, University of Sydney',
-'quote'=>'Students embraced it as their primary collaboration hub within the first week of rollout.'
-]
-
-];
-
-@endphp
-
-
-
-
-
-@foreach($testimonials as $testimonial)
-
-
-<div class="bg-white rounded-2xl border border-border p-6 space-y-4">
-
-
-<div class="text-yellow-400">
-
-★★★★★
-
-</div>
-
-
-
-<p class="text-sm text-muted-foreground leading-relaxed">
-
-“{{ $testimonial['quote'] }}”
-
-</p>
-
-
-
-
-<div class="border-t border-border pt-4">
-
-
-<p class="text-sm font-semibold text-foreground">
-
-{{ $testimonial['name'] }}
-
-</p>
-
-
-<p class="text-xs text-muted-foreground">
-
-{{ $testimonial['role'] }}
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-@endforeach
-
-
-
-</div>
-
-
-</section>
 
 
 
@@ -769,22 +614,11 @@ href="{{ route('register') }}"
 class="flex items-center gap-2 bg-white text-primary font-semibold px-7 py-3.5 rounded-xl hover:bg-blue-50 shadow-lg"
 >
 
-Create free account
+Create an account
 
 →
 
 </a>
-
-
-
-<button
-class="flex items-center gap-2 text-white font-medium px-7 py-3.5 rounded-xl border border-white/30 hover:bg-white/10"
->
-
-Request a demo
-
-</button>
-
 
 </div>
 
@@ -857,7 +691,7 @@ Uni<span class="text-primary">Forum</span>
 <p class="text-sm text-muted-foreground leading-relaxed max-w-xs">
 
 
-The collaborative academic platform built for modern universities. Connecting students, lecturers, and institutions worldwide.
+The collaborative academic platform built for modern universities. Connecting students and lecturers.
 
 </p>
 
@@ -899,25 +733,9 @@ $footerLinks = [
 'Discussions',
 'Quizzes',
 'Groups',
-'Analytics',
 'Notifications'
 ],
 
-'Institution'=>[
-'Universities',
-'Pricing',
-'Enterprise',
-'API Docs',
-'Integrations'
-],
-
-'Company'=>[
-'About',
-'Blog',
-'Careers',
-'Privacy',
-'Terms'
-]
 
 ];
 
@@ -994,7 +812,7 @@ $footerLinks = [
 
 <p class="text-xs text-muted-foreground">
 
-Trusted by 50+ universities · GDPR compliant · SOC 2 Type II
+Trusted by many universities · GDPR compliant 
 
 </p>
 
