@@ -68,4 +68,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+ /**
+      * The academic discussion groups that student belongs to.
+      */
+     public function groups()
+     {
+         return $this->belongsToMany(\App\Models\Group::class, 'group_members', 'user_id', 'group_id');
+     }
 }

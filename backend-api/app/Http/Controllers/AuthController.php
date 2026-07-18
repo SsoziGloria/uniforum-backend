@@ -30,7 +30,7 @@ class AuthController extends Controller
             }
 
                // Create an official, formatted token string
-               $tokenStr = $userModel->createToken('JavaDesktopClient')->plainTextToken;
+               $tokenStr = $user->createToken('JavaDesktopClient')->plainTextToken;
 
 
 

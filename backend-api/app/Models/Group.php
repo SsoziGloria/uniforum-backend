@@ -11,7 +11,12 @@ class Group extends Model
 {
     protected $table = 'groups';
     protected $primaryKey = 'group_id';
-    protected $fillable = ['group_name', 'created_by'];
+    protected $fillable = ['group_name', 'description', 'created_by'];
+
+    //ID is an auto-incrementing integer
+    public $incrementing = true;
+    protected $keyType = 'int';
+
 
     public function creator(): BelongsTo
     {
