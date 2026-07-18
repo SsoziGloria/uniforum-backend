@@ -1,14 +1,8 @@
-@extends('layouts.dashboard')
-
+@extends('layouts.lecturer')
 
 @section('title', 'Lecturer Dashboard')
 
-
-@section('heading')
-Lecturer Dashboard
-@endsection
-
-
+@section('page-title', 'Dashboard')
 
 @section('content')
 
@@ -25,11 +19,12 @@ Lecturer Dashboard
         Manage discussions, create quizzes, monitor student participation,
         and guide academic conversations.
     </p>
+    <a href="/lecturer/discussions"
+       class="inline-block mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold hover:bg-blue-50 transition">
 
+    Explore Discussions
 
-    <button class="mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold">
-        Create Announcement
-    </button>
+    </a>
 
 
 </div>
@@ -54,8 +49,10 @@ Active Discussions
 </p>
 
 <h3 class="text-3xl font-bold mt-2">
-18
+--
 </h3>
+
+{{-- Active discussions count from backend --}}
 
 </div>
 
@@ -73,7 +70,7 @@ Students Engaged
 </p>
 
 <h3 class="text-3xl font-bold mt-2">
-245
+--
 </h3>
 
 </div>
@@ -92,7 +89,7 @@ Active Quizzes
 </p>
 
 <h3 class="text-3xl font-bold mt-2">
-5
+--
 </h3>
 
 </div>
@@ -111,7 +108,7 @@ Average Participation
 </p>
 
 <h3 class="text-3xl font-bold mt-2">
-82%
+--
 </h3>
 
 </div>
@@ -138,9 +135,12 @@ Quiz Management
 </h2>
 
 
-<button class="bg-blue-600 text-white px-4 py-2 rounded-xl">
-Create Quiz
-</button>
+<a href="/lecturer/quizzes/create"
+   class="bg-blue-600 text-white px-4 py-2 rounded-xl">
+
+    Create Quiz
+
+</a>
 
 </div>
 
@@ -150,7 +150,9 @@ Create Quiz
 <div class="space-y-4">
 
 
-<div class="p-4 bg-slate-50 rounded-xl flex justify-between">
+<a href="/lecturer/quizzes/show"
+   class="block p-4 bg-slate-50 rounded-xl flex justify-between hover:bg-blue-50 transition">
+
 
 <div>
 
@@ -170,12 +172,14 @@ Active
 </span>
 
 
-</div>
+</a>
 
 
 
 
-<div class="p-4 bg-slate-50 rounded-xl flex justify-between">
+<a href="/lecturer/quizzes/show"
+   class="block p-4 bg-slate-50 rounded-xl flex justify-between hover:bg-blue-50 transition">
+
 
 <div>
 
@@ -195,48 +199,8 @@ Scheduled
 </span>
 
 
-</div>
+</a>
 
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-<!-- Quick Actions -->
-
-<div class="bg-white rounded-2xl border p-6">
-
-
-<h2 class="text-xl font-bold mb-5">
-Quick Actions
-</h2>
-
-
-<div class="space-y-3">
-
-
-<button class="w-full text-left p-4 rounded-xl bg-blue-50 text-blue-700">
-➕ Create Discussion
-</button>
-
-
-<button class="w-full text-left p-4 rounded-xl bg-blue-50 text-blue-700">
-📢 Post Announcement
-</button>
-
-
-<button class="w-full text-left p-4 rounded-xl bg-blue-50 text-blue-700">
-📊 View Analytics
-</button>
-
-
-</div>
 
 
 </div>
@@ -271,7 +235,7 @@ Computer Science Group
 </span>
 
 <span>
-85%
+--
 </span>
 
 </div>
@@ -299,7 +263,7 @@ Software Engineering Group
 </span>
 
 <span>
-72%
+--
 </span>
 
 </div>

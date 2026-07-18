@@ -1,4 +1,4 @@
-@extends('layouts.student')
+@extends('layouts.lecturer')
 
 @section('title', 'Create Discussion - UniForum')
 
@@ -13,7 +13,7 @@
 
         <div class="max-w-4xl mx-auto px-6 py-8">
 
-            <a href="/student/discussions"
+            <a href="/lecturer/discussions"
                class="text-sm text-blue-600 hover:underline flex items-center gap-2">
 
                 <svg class="w-4 h-4"
@@ -203,6 +203,8 @@
 
 
 
+
+
                 <!-- AI Notice -->
 
                 <div class="mt-6 bg-blue-50 rounded-xl p-4 flex gap-3">
@@ -224,7 +226,7 @@
                     <p class="text-sm text-blue-700">
 
                         UniForum AI will automatically classify your discussion 
-                        and recommend it to students with similar interests based on their previous engagement.
+                        and recommend it to members with similar interests based on their previous engagement.
                     </p>
 
 
@@ -241,7 +243,7 @@
                 <div class="mt-8 flex justify-end gap-4">
 
 
-                    <a href="/student/discussions"
+                    <a href="/lecturer/discussions"
                        class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
 
                        Cancel

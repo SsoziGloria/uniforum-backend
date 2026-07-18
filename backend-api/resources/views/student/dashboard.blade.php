@@ -1,14 +1,8 @@
-@extends('layouts.dashboard')
-
+@extends('layouts.student')
 
 @section('title', 'Student Dashboard')
 
-
-@section('heading')
-Student Dashboard
-@endsection
-
-
+@section('page-title', 'Dashboard')
 
 @section('content')
 
@@ -18,7 +12,7 @@ Student Dashboard
 <div class="bg-blue-600 rounded-3xl p-8 text-white mb-8">
 
     <h1 class="text-3xl font-bold">
-        Welcome back, Student 👋
+    Welcome back, {{ auth()->user()->name ?? 'Student' }} 👋
     </h1>
 
 
@@ -28,9 +22,12 @@ Student Dashboard
     </p>
 
 
-    <button class="mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold">
-        Explore Discussions
-    </button>
+    <a href="/student/discussions"
+   class="inline-block mt-6 bg-white text-blue-600 px-5 py-3 rounded-xl font-semibold hover:bg-blue-50 transition">
+
+    Explore Discussions
+
+    </a>
 
 </div>
 
@@ -42,7 +39,7 @@ Student Dashboard
 <div class="grid md:grid-cols-4 gap-6">
 
 
-    <div class="bg-white rounded-2xl border p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
 
         <div class="text-3xl mb-3">
             💬
@@ -61,7 +58,7 @@ Student Dashboard
 
 
 
-    <div class="bg-white rounded-2xl border p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
 
         <div class="text-3xl mb-3">
             ⭐
@@ -80,7 +77,7 @@ Student Dashboard
 
 
 
-    <div class="bg-white rounded-2xl border p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
 
         <div class="text-3xl mb-3">
             📚
@@ -99,7 +96,7 @@ Student Dashboard
 
 
 
-    <div class="bg-white rounded-2xl border p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6">
 
         <div class="text-3xl mb-3">
             📝
@@ -218,7 +215,7 @@ Software Design Patterns
 </div>
 
 
-<button class="text-blues-600">
+<button class="text-blue-600">
 View
 </button>
 
