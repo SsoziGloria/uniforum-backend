@@ -26,7 +26,13 @@ class EnsureUserIsLecturer
 
         $userId = $request->user()->id;
 
-        // Query the group_members table using your Eloquent Pivot model
+        // GLOBAL BYPASS: If the user's account role is already 'lecturer',
+        // grant immediate access without checking group pivot tables.
+        if (isset($userId->role) && $userId->role === 'lecturer') {
+                    return $next($request);
+                }
+
+        //Otherwise, Query the group_members table using your Eloquent Pivot model
         $membership = GroupMember::where('group_id', $groupId)
             ->where('user_id', $userId)
             ->first();
