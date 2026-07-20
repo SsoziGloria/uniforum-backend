@@ -33,7 +33,7 @@
 
             <p class="mt-2 text-slate-500">
 
-                Create a lecturer-led academic discussion group and manage student collaboration.
+                Create an academic discussion group and manage student collaboration.
 
             </p>
 
@@ -252,68 +252,6 @@
 
 
                 </div>
-
-
-
-
-
-
-
-
-                <!-- Group Information -->
-
-
-                <div class="mt-10">
-
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-
-                        Group Type
-
-                    </h2>
-
-
-
-                    <div class="mt-5">
-
-
-                        <label class="flex items-center gap-3">
-
-
-                            <input
-                                type="radio"
-                                name="group_type"
-                                value="lecturer"
-                                checked>
-
-
-
-                            <span>
-
-                                Lecturer-led Group
-
-                            </span>
-
-
-
-                        </label>
-
-
-                    </div>
-
-
-
-                    <p class="mt-2 text-sm text-slate-500">
-
-
-                        As the creator, you will automatically become the group administrator.
-
-
-                    </p>
-
-
-                </div>
-
 
 
                 <!-- Actions -->
