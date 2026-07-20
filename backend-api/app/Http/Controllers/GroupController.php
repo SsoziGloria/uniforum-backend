@@ -48,6 +48,7 @@ class GroupController extends Controller
             'lecturer_passcode' => 'nullable|string',
         ]);
 
+        $currentUser = $request->user();
         $creatorId = $request->user()->id;
         $role = 'admin';
 
@@ -98,68 +99,67 @@ class GroupController extends Controller
      * Accessible by both 'admin' and 'lecturer' roles.
      */
     public function addMember(Request $request, $groupId)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email'
-        ]);
+       {
+          $validated = $request->validate([
+                   'email'          => 'required|email',
+                   'rules_accepted' => 'required|accepted' // Enforces rule agreement when joining
+            ], [
+                   'rules_accepted.required' => 'The user must accept the platform rules and guidelines before joining.',
+                   'rules_accepted.accepted' => 'The user must accept the platform rules and guidelines before joining.'
+             ]);
 
-        $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
+            $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
 
-        // Find the user by email using Eloquent Model
-        $userToAdd = User::where('email', $validated['email'])->first();
+            $userToAdd = User::where('email', $validated['email'])->first();
 
-        if (!$userToAdd) {
-            return response()->json([
-                'status'  => 'Error',
-                'message' => 'No user found with that email address.'
-            ], 404);
-        }
-
-        $currentUser= $request->user()->id;
-        $isAuthorized = false;
-
-
-        // Global Lecturer Bypass or Group Admin/Lecturer check
-          if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
-                    $isAuthorized = true;
-           } else {
-                $isAuthorized = GroupMember::where('group_id', $groupIdClean)
-                        ->where('user_id', $currentUser->id)
-                        ->whereIn('role', ['admin', 'lecturer'])
-                        ->exists();
+          if (!$userToAdd) {
+                return response()->json([
+                       'status'  => 'Error',
+                       'message' => 'No user found with that email address.'
+                   ], 404);
             }
 
-        if (!$isAuthorized) {
+               $currentUser = $request->user();
+               $isAuthorized = false;
+
+          if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+                   $isAuthorized = true;
+               } else {
+                   $isAuthorized = GroupMember::where('group_id', $groupIdClean)
+                       ->where('user_id', $currentUser->id)
+                       ->whereIn('role', ['admin', 'lecturer'])
+                       ->exists();
+               }
+
+          if (!$isAuthorized) {
+                   return response()->json([
+                       'status'  => 'Error',
+                       'message' => 'Unauthorized. Only group administrators or lecturers can add new members.'
+                   ], 403);
+               }
+
+               $alreadyMember = GroupMember::where('group_id', $groupIdClean)
+                   ->where('user_id', $userToAdd->id)
+                   ->exists();
+
+          if ($alreadyMember) {
+                   return response()->json([
+                       'status'  => 'Error',
+                       'message' => 'This user is already a registered member of this group.'
+                   ], 422);
+               }
+
+               GroupMember::create([
+                   'group_id' => $groupIdClean,
+                   'user_id'  => $userToAdd->id,
+                   'role'     => 'member'
+               ]);
+
             return response()->json([
-                'status'  => 'Error',
-                'message' => 'Unauthorized. Only group administrators or lecturers can add new members.'
-            ], 403);
-        }
-
-        // Check if they are already in the group
-        $alreadyMember = GroupMember::where('group_id', $groupIdClean)
-            ->where('user_id', $userToAdd->id)
-            ->exists();
-
-        if ($alreadyMember) {
-            return response()->json([
-                'status'  => 'Error',
-                'message' => 'This user is already a registered member of this group.'
-            ], 422);
-        }
-
-        // Add them to the group with default role 'member' (Student)
-        GroupMember::create([
-            'group_id' => $groupIdClean,
-            'user_id'  => $userToAdd->id,
-            'role'     => 'member'
-        ]);
-
-        return response()->json([
-            'status'  => 'Success',
-            'message' => "Successfully added {$userToAdd->name} to the group!"
-        ], 200);
-    }
+                   'status'  => 'Success',
+                   'message' => "Successfully added {$userToAdd->name} to the group after rules acceptance!"
+               ], 200);
+           }
 
     /**
      * Get a list of all verified members in a group.
@@ -184,7 +184,7 @@ class GroupController extends Controller
         ]);
 
         $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
-        $currentUser = $request->user()->id;
+        $currentUser = $request->user();
         $isAuthorized = false;
 
        if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
@@ -237,7 +237,7 @@ class GroupController extends Controller
         ]);
 
         $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
-        $currentUser = $request->user()->id;
+        $currentUser = $request->user();
         $isAuthorized = false;
 
      if (isset($currentUser->role) && $currentUser->role === 'lecturer') {

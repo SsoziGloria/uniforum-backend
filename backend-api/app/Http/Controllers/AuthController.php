@@ -55,13 +55,9 @@ class AuthController extends Controller
                'user_name' => 'required|string|max:255',
                'email'     => 'required|email|max:255|unique:users,email',
                'password'  => 'required|string|min:6',
-               'rules_accepted' => 'required|accepted',
                'role'  => 'required|string|in:student,lecturer',
                'lecturer_passcode' => 'nullable|string', // Passcode if signing up as lecturer
 
-               ], [ // Custom error message passed back UI
-               'rules_accepted.required' => 'You must accept the platform rules and guidelines to complete registration.',
-               'rules_accepted.accepted' => 'You must accept the platform rules and guidelines to complete registration.'
            ]);
 
            $role = 'student'; // Default role
@@ -98,7 +94,6 @@ class AuthController extends Controller
                'role'       =>  $role,
                //'status'     => 'active',
                //'online'     => false,
-               'rules_accepted' => true,
                'created_at' => now(),
                'updated_at' => now(),
            ]);
