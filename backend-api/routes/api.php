@@ -63,6 +63,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
       // --- UNIFIED MESSAGES ---
        Route::get('/groups/{group}/messages', [MessageController::class, 'getMessages']);
        Route::post('/groups/{group}/messages', [MessageController::class, 'store']);
+      //Pdf export
+      Route::get('/groups/{group}/topics/{id}/export', [TopicController::class, 'exportPdf']);
 
 
       // --- GROUP MEMBER ---

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TopicController extends Controller
 {
@@ -50,6 +51,20 @@ class TopicController extends Controller
             'data' => $topic
             ], 201);
     }
+
+   public function exportPdf($group, $id)
+   {
+       // Find the topic making sure it belongs to that specific group
+       $topic = Topic::where('group_id', $group)->where('topic_id', $id)->firstOrFail();
+
+       // Fetch messages for this topic u
+       $messages = $topic->messages;
+
+       // Load into the PDF compiler
+       $pdf = Pdf::loadView('pdf.topic', compact('topic', 'messages'));
+
+       return $pdf->download("topic-{$id}-chats.pdf");
+   }
 
     /**
      * Display the specified resource.
