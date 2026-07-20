@@ -297,6 +297,39 @@ Manage courses & announcements
 
 </div>
 
+<!-- LECTURER VERIFICATION TOKEN -->
+
+<div 
+    x-show="role === 'lecturer'"
+    x-transition
+    class="space-y-2"
+>
+
+
+<label class="text-sm font-medium">
+
+Lecturer Verification Token
+
+</label>
+
+
+<input
+type="text"
+name="lecturer_token"
+placeholder="Enter lecturer verification token"
+class="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-input-background"
+/>
+
+
+<p class="text-xs text-muted-foreground">
+
+A verification token is required to create a lecturer account.
+
+</p>
+
+
+</div>
+
 
 
 

@@ -170,39 +170,6 @@
 
 
 
-                
-
-
-                <!-- Creator Role -->
-
-                <div class="mt-10">
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Create Group As
-                    </h2>
-
-                    <p class="text-sm text-slate-500 mt-1">
-                        Students can create student-led groups. 
-                    </p>
-
-                    <div class="mt-5 space-y-4">
-
-                        <label class="flex items-center gap-3">
-
-                            <input
-                                type="radio"
-                                name="group_role"
-                                value="student"
-                                x-model="groupRole">
-
-                            <span>
-                                Student-led Group
-                            </span>
-
-                        </label>
-
-
-
                         
                 <!-- Actions -->
 
