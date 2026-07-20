@@ -56,11 +56,29 @@ class AuthController extends Controller
                'email'     => 'required|email|max:255|unique:users,email',
                'password'  => 'required|string|min:6',
                'rules_accepted' => 'required|accepted',
+               'role'  => 'required|string|in:student,lecturer',
+               'lecturer_passcode' => 'nullable|string', // Passcode if signing up as lecturer
 
                ], [ // Custom error message passed back UI
                'rules_accepted.required' => 'You must accept the platform rules and guidelines to complete registration.',
                'rules_accepted.accepted' => 'You must accept the platform rules and guidelines to complete registration.'
            ]);
+
+           $role = 'student'; // Default role
+
+           // If they are registering as a lecturer, verify the secret staff passcode
+           if ($validated['role'] === 'lecturer') {
+            $secretStaffCode = 'MUK-STAFF-2026'; // Same secret token you use for groups
+
+             if (($validated['lecturer_passcode'] ?? '') === $secretStaffCode) {
+                      $role = 'lecturer';
+              } else {
+                return response()->json([
+                   'status' => 'Error',
+                   'message' => 'Invalid lecturer secret passcode. Registration failed.'
+                       ], 403);
+                     }
+                 }
 
            //Check if a user with this email already exists manually
            $existingUser = DB::table('users')->where('email', $validated['email'])->first();
@@ -77,7 +95,7 @@ class AuthController extends Controller
                'name'  => $validated['user_name'],
                'email'      => $validated['email'],
                'password'   => Hash::make($validated['password']),
-               //'role'       => 'student', // Defaults new self-registrations to student
+               'role'       =>  $role,
                //'status'     => 'active',
                //'online'     => false,
                'rules_accepted' => true,
@@ -95,7 +113,7 @@ class AuthController extends Controller
                    'user_id' => $user->id,
                    'user_name' => $user->name,
                    'email' => $user->email,
-                   'role' => 'student'
+                   'role' => $user->role
                ]
            ], 201);
        }
