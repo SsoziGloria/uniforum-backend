@@ -21,17 +21,32 @@ class GroupMemberController extends Controller
         $targetUserId = is_object($user) ? ($user->id) : (int)$user;
         $currentUserId = $request->user()->id;
 
+        $isAuthorized = false;
+
+        // GLOBAL LECTURER BYPASS
+        // If they are globally a lecturer, skip group-level checks!
+        if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+                    $isAuthorized = true;
+                }
+         else{
         // Ensure the logged-in user has administrative power (must be 'admin' or 'lecturer')
         $currentUserMembership = GroupMember::where('group_id', $groupId)
             ->where('user_id', $currentUserId)
             ->first();
 
-        if (!$currentUserMembership || !in_array($currentUserMembership->role, ['admin', 'lecturer'])) {
-            return response()->json([
-                'status' => 'Error',
-                'message' => 'Access Denied: Only group administrators or lecturers can modify roles.'
-            ], 403);
-        }
+        if ($currentUserMembership && in_array($currentUserMembership->role, ['admin', 'lecturer'])) {
+                        $isAuthorized = true;
+             }
+         }
+
+      //if neither condition met, block access
+       if (!$isAuthorized) {
+              return response()->json([
+                  'status' => 'Error',
+                  'message' => 'Access Denied: Only group administrators or lecturers can modify roles.'
+                 ], 403);
+             }
+
 
         // Fetch the target member to update
         $targetMembership = GroupMember::where('group_id', $groupId)

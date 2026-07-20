@@ -49,10 +49,14 @@ class GroupController extends Controller
         ]);
 
         $creatorId = $request->user()->id;
-        $role = 'admin'; // Default to student admin
+        $role = 'admin';
 
+        // If user is already a global lecturer, auto-assign lecturer role
+        if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+            $role = 'lecturer';
+         }
         // Elevate the creator to 'lecturer' ONLY if they provide the correct passcode
-        if (isset($validated['creator_role']) && $validated['creator_role'] === 'lecturer') {
+        elseif (isset($validated['creator_role']) && $validated['creator_role'] === 'lecturer') {
 
             // Hardcoded secret code for verification during testing/presentation
             $secretStaffCode = 'MUK-STAFF-2026';
@@ -111,15 +115,21 @@ class GroupController extends Controller
             ], 404);
         }
 
-        $authenticatedUserId = $request->user()->id;
+        $currentUser= $request->user()->id;
+        $isAuthorized = false;
 
-        // SECURITY CHECK: Is the person adding members an admin OR lecturer of this group?
-        $authorized = GroupMember::where('group_id', $groupIdClean)
-            ->where('user_id', $authenticatedUserId)
-            ->whereIn('role', ['admin', 'lecturer'])
-            ->exists();
 
-        if (!$authorized) {
+        // Global Lecturer Bypass or Group Admin/Lecturer check
+          if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+                    $isAuthorized = true;
+           } else {
+                $isAuthorized = GroupMember::where('group_id', $groupIdClean)
+                        ->where('user_id', $currentUser->id)
+                        ->whereIn('role', ['admin', 'lecturer'])
+                        ->exists();
+            }
+
+        if (!$isAuthorized) {
             return response()->json([
                 'status'  => 'Error',
                 'message' => 'Unauthorized. Only group administrators or lecturers can add new members.'
@@ -174,20 +184,24 @@ class GroupController extends Controller
         ]);
 
         $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
-        $authenticatedUserId = $request->user()->id;
+        $currentUser = $request->user()->id;
+        $isAuthorized = false;
 
-        // SECURITY CHECK: Is logged-in user admin or lecturer of this group?
-        $authorized = GroupMember::where('group_id', $groupIdClean)
-            ->where('user_id', $authenticatedUserId)
-            ->whereIn('role', ['admin', 'lecturer'])
-            ->exists();
+       if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+                   $isAuthorized = true;
+           } else {
+              $isAuthorized = GroupMember::where('group_id', $groupIdClean)
+                 ->where('user_id', $currentUser->id)
+                 ->whereIn('role', ['admin', 'lecturer'])
+                 ->exists();
+               }
 
-        if (!$authorized) {
-            return response()->json([
-                'status'  => 'Error',
-                'message' => 'Unauthorized. Only group administrators or lecturers can manage member roles.'
-            ], 403);
-        }
+       if (!$isAuthorized) {
+           return response()->json([
+             'status'  => 'Error',
+             'message' => 'Unauthorized. Only group administrators or lecturers can manage member roles.'
+                  ], 403);
+            }
 
         // Check if the target user actually belongs to the group
         $targetMembership = GroupMember::where('group_id', $groupIdClean)
@@ -223,30 +237,32 @@ class GroupController extends Controller
         ]);
 
         $groupIdClean = is_object($groupId) ? ($groupId->id ?? $groupId->group_id) : (int)$groupId;
-        $authenticatedUserId = $request->user()->id;
+        $currentUser = $request->user()->id;
+        $isAuthorized = false;
 
-        // SECURITY CHECK: Is logged-in user admin or lecturer?
-        $authorized = GroupMember::where('group_id', $groupIdClean)
-            ->where('user_id', $authenticatedUserId)
-            ->whereIn('role', ['admin', 'lecturer'])
-            ->exists();
+     if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
+            $isAuthorized = true;
+        } else {
+            $isAuthorized = GroupMember::where('group_id', $groupIdClean)
+                ->where('user_id', $currentUser->id)
+                ->whereIn('role', ['admin', 'lecturer'])
+                ->exists();
+        }
 
-        if (!$authorized) {
+        if (!$isAuthorized) {
             return response()->json([
                 'status'  => 'Error',
                 'message' => 'Unauthorized. Only group administrators or lecturers can remove members.'
             ], 403);
         }
 
-        // Prevent admin/lecturers from deleting themselves
-        if ($validated['user_id'] == $authenticatedUserId) {
+        if ($validated['user_id'] == $currentUser->id) {
             return response()->json([
                 'status'  => 'Error',
-                'message' => 'You cannot remove yourself from the group. Pass management to another admin or lecturer first.'
+                'message' => 'You cannot remove yourself from the group.'
             ], 422);
         }
 
-        // Fetch membership using Eloquent Pivot Model
         $membership = GroupMember::where('group_id', $groupIdClean)
             ->where('user_id', $validated['user_id'])
             ->first();
