@@ -44,7 +44,7 @@ class AuthController extends Controller
 
             'user' => [
                 'user_id'   => $user->id,
-                'user_name' => $user->name,
+                'name' => $user->name,
                 'email'     => $user->email,
                 'role'      => $user->role,
             ]
@@ -75,7 +75,7 @@ class AuthController extends Controller
            ]);
 
            $user = app(UserRegistrationService::class)->register([
-               'name' => $validated['user_name'],
+               'name' => $validated['name'],
                'email' => $validated['email'],
                'password' => $validated['password'],
                'role' => $validated['role'],
