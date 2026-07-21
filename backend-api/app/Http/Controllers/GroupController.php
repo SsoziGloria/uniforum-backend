@@ -112,13 +112,10 @@ class GroupController extends Controller
             ], 200);
         }
 
-
-
-       /**
-           * JOINING A GROUP
-           * Join a group (with mandatory rules enforcement check)
-           */
-
+    /**
+     * JOINING A GROUP
+     * Join a group (with mandatory rules enforcement check)
+     */
     public function join(Request $request, $groupId)
     {
         $validated = $request->validate([
@@ -128,7 +125,7 @@ class GroupController extends Controller
             'rules_accepted.accepted' => 'You must accept the platform rules and guidelines to join this group.'
         ]);
 
-        $user = $request->user(); // Authenticated user via Sanctum token
+        $user = $request->user(); // Authenticated user
         $group = Group::findOrFail($groupId);
 
         // Check if user is already a member
@@ -139,17 +136,27 @@ class GroupController extends Controller
             ], 400);
         }
 
-        // Attach user to the group
+        // Determine the correct role based on global privileges
+        $assignedRole = 'member'; // Default role
+
+        if (isset($user->role) && $user->role === 'lecturer') {
+            $assignedRole = 'lecturer';
+        }
+
+        // Attach user to the group with their proper role and rule tracking
         $group->members()->attach($user->id, [
+            'role'           => $assignedRole,
             'rules_accepted' => true,
-            'joined_at' => now(),
+            'joined_at'      => now(),
         ]);
 
         return response()->json([
-            'status' => 'Success',
-            'message' => 'Successfully joined the group!',
+            'status'  => 'Success',
+            'message' => "Successfully joined the group as {$assignedRole}!",
         ], 200);
     }
+
+
     /**
      * ADD ANOTHER USER TO GROUP USING EMAIL
      * Accessible by both 'admin' and 'lecturer' roles.
@@ -205,10 +212,20 @@ class GroupController extends Controller
                    ], 422);
                }
 
+       // Determine the correct role for the user being added
+       $assignedRole = 'member'; // default for normal users
+
+       // If the user to add is globally a lecturer, keep them as a lecturer in the group
+       if (isset($userToAdd->role) && $userToAdd->role === 'lecturer') {
+           $assignedRole = 'lecturer';
+       }
+
                GroupMember::create([
                    'group_id' => $groupIdClean,
                    'user_id'  => $userToAdd->id,
-                   'role'     => 'member'
+                   'role'     => $assignedRole,
+                   'rules_accepted' => true,
+                   'joined_at'      => now(),
                ]);
 
             return response()->json([
