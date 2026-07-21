@@ -41,9 +41,9 @@ class AuthController extends Controller
                 'token' => $tokenStr, // The Java application captures and saves this string
                 'user' => [
                     'user_id'   => $user->id,
-                    'user_name' => $user->name,
-                   // 'role'      => $user->role,
-                    'email'     => $user->email
+                    'name' => $user->name,
+                    'email'     => $user->email,
+                    'role' => $user->role,
                 ]
             ], 200);
         }
@@ -52,7 +52,7 @@ class AuthController extends Controller
        {
            //Validate the incoming sign-up details
            $validated = $request->validate([
-               'user_name' => 'required|string|max:255',
+               'name' => 'required|string|max:255',
                'email'     => 'required|email|max:255|unique:users,email',
                'password'  => 'required|string|min:6',
                'role'  => 'required|string|in:student,lecturer',
@@ -88,7 +88,7 @@ class AuthController extends Controller
            //Insert the new student profile into your users table
            //Hash::make() so the password is securely encrypted!
            $user  = User::create([
-               'name'  => $validated['user_name'],
+               'name'  => $validated['name'],
                'email'      => $validated['email'],
                'password'   => Hash::make($validated['password']),
                'role'       =>  $role,
@@ -106,9 +106,9 @@ class AuthController extends Controller
                'message' => 'User account created successfully!',
                'user' => [
                    'user_id' => $user->id,
-                   'user_name' => $user->name,
+                   'name' => $user->name,
                    'email' => $user->email,
-                   'role' => $user->role
+
                ]
            ], 201);
        }
