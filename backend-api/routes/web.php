@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -11,19 +12,24 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
 });
 
-Route::get('/student/dashboard', function () {
-    return view('student.dashboard');
-})->name('student.dashboard');
+Route::middleware('auth')->group(function () {
+
+    Route::get('/student/dashboard', function () {
+        return view('student.dashboard');
+    })->name('student.dashboard');
 
 
-Route::get('/lecturer/dashboard', function () {
-    return view('lecturer.dashboard');
-})->name('lecturer.dashboard');
+    Route::get('/lecturer/dashboard', function () {
+        return view('lecturer.dashboard');
+    })->name('lecturer.dashboard');
+
+});
 
 Route::get('/student/discussions', function () {
     return view('student.discussions.index');

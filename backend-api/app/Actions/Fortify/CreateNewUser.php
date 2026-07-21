@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
+use App\Services\UserRegistrationService;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -19,19 +20,12 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'role' => ['required', 'in:student,lecturer'],
-            'password' => $this->passwordRules(),
-            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
-        ])->validate();
-
-        return User::create([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'role' => $input['role'],
-            'password' => Hash::make($input['password']),
-        ]);
+        return app(UserRegistrationService::class)->register([
+        'name' => $input['name'],
+        'email' => $input['email'],
+        'password' => $input['password'],
+        'role' => $input['role'],
+        'lecturer_passcode' => $input['lecturer_passcode'] ?? null,
+         ]);
     }
 }

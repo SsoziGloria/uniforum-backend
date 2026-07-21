@@ -284,7 +284,7 @@ Lecturer
 
 <p class="text-xs text-muted-foreground">
 
-Manage courses & announcements
+Manage students & discussions
 
 </p>
 
@@ -296,6 +296,22 @@ Manage courses & announcements
 
 
 </div>
+
+
+
+
+
+
+
+
+<form method="POST" action="{{ route('register') }}" class="space-y-4">
+
+@csrf
+<input
+type="hidden"
+name="role"
+x-model="role"
+/>
 
 <!-- LECTURER VERIFICATION TOKEN -->
 
@@ -311,14 +327,14 @@ Manage courses & announcements
 Lecturer Verification Token
 
 </label>
-
-
 <input
 type="text"
-name="lecturer_token"
+name="lecturer_passcode"
+x-bind:required="role === 'lecturer'"
 placeholder="Enter lecturer verification token"
 class="w-full mt-1 px-4 py-3 rounded-xl border border-border bg-input-background"
 />
+
 
 
 <p class="text-xs text-muted-foreground">
@@ -329,24 +345,6 @@ A verification token is required to create a lecturer account.
 
 
 </div>
-
-
-
-
-
-
-
-<form method="POST" action="{{ route('register') }}" class="space-y-4">
-
-@csrf
-
-
-
-<input
-type="hidden"
-name="role"
-x-model="role"
-/>
 
 
 
