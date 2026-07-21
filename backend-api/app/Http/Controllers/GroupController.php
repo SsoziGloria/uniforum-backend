@@ -94,6 +94,69 @@ class GroupController extends Controller
         ], 201);
     }
 
+        /**
+         * Browse and search all groups in the system.
+         */
+        public function search(Request $request)
+        {
+            $searchTerm = $request->query('search');
+
+            $groups = Group::when($searchTerm, function ($query, $searchTerm) {
+                return $query->where('group_name', 'like', "%{$searchTerm}%")
+                             ->orWhere('description', 'like', "%{$searchTerm}%");
+            })->get();
+
+            return response()->json([
+                'success' => true,
+                'data'    => $groups
+            ], 200);
+        }
+
+    /**
+     * JOINING A GROUP
+     * Join a group (with mandatory rules enforcement check)
+     */
+    public function join(Request $request, $groupId)
+    {
+        $validated = $request->validate([
+            'rules_accepted' => 'required|accepted', // Must agree to rules
+        ], [
+            'rules_accepted.required' => 'You must accept the platform rules and guidelines to join this group.',
+            'rules_accepted.accepted' => 'You must accept the platform rules and guidelines to join this group.'
+        ]);
+
+        $user = $request->user(); // Authenticated user
+        $group = Group::findOrFail($groupId);
+
+        // Check if user is already a member
+        if ($group->members()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'status' => 'Error',
+                'message' => 'You are already a member of this group.'
+            ], 400);
+        }
+
+        // Determine the correct role based on global privileges
+        $assignedRole = 'member'; // Default role
+
+        if (isset($user->role) && $user->role === 'lecturer') {
+            $assignedRole = 'lecturer';
+        }
+
+        // Attach user to the group with their proper role and rule tracking
+        $group->members()->attach($user->id, [
+            'role'           => $assignedRole,
+            'rules_accepted' => true,
+            'joined_at'      => now(),
+        ]);
+
+        return response()->json([
+            'status'  => 'Success',
+            'message' => "Successfully joined the group as {$assignedRole}!",
+        ], 200);
+    }
+
+
     /**
      * ADD ANOTHER USER TO GROUP USING EMAIL
      * Accessible by both 'admin' and 'lecturer' roles.
@@ -149,10 +212,20 @@ class GroupController extends Controller
                    ], 422);
                }
 
+       // Determine the correct role for the user being added
+       $assignedRole = 'member'; // default for normal users
+
+       // If the user to add is globally a lecturer, keep them as a lecturer in the group
+       if (isset($userToAdd->role) && $userToAdd->role === 'lecturer') {
+           $assignedRole = 'lecturer';
+       }
+
                GroupMember::create([
                    'group_id' => $groupIdClean,
                    'user_id'  => $userToAdd->id,
-                   'role'     => 'member'
+                   'role'     => $assignedRole,
+                   'rules_accepted' => true,
+                   'joined_at'      => now(),
                ]);
 
             return response()->json([

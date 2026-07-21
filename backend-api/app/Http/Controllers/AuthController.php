@@ -66,6 +66,7 @@ class AuthController extends Controller
            //Validate the incoming sign-up details
            $validated = $request->validate([
                'name' => 'required|string|max:255',
+               'name' => 'required|string|max:255',
                'email'     => 'required|email|max:255|unique:users,email',
                'password'  => 'required|string|min:6',
                'role'  => 'required|string|in:student,lecturer',
@@ -89,8 +90,9 @@ class AuthController extends Controller
                'user' => [
                    'user_id' => $user->id,
                    'name' => $user->name,
+                   'name' => $user->name,
                    'email' => $user->email,
-                   'role' => $user->role
+
                ]
            ], 201);
        }
