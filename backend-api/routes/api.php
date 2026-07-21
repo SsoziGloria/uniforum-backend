@@ -39,6 +39,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/groups', [GroupController::class, 'index']);
     // Create a new academic group (if allowed)
     Route::post('/groups', [GroupController::class, 'store']);
+    //Joining a group
+    Route::get('/groups/search', [GroupController::class, 'search']); // Browse and search groups
+    Route::post('/groups/{id}/join', [GroupController::class, 'join']); // Join a group with rules check
 
 
 /*
