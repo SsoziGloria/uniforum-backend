@@ -31,7 +31,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
               return Broadcast::auth($request);
           });
 
-  // OFFLINE SYNC ROUTE:
+     // OFFLINE SYNC ROUTE:
       Route::get('/messages/sync', [MessageController::class, 'sync']);
 
     // --- GROUPS MANAGEMENT ---
