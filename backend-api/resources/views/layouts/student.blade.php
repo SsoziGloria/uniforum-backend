@@ -25,10 +25,10 @@
 
     <!-- Sidebar -->
 
-    
+
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
-       
-        
+
+
         <!-- Logo -->
 
         <div class="px-6 py-6 border-b border-slate-200">
@@ -48,7 +48,7 @@
         <!-- Navigation -->
 
         <nav class="flex-1 px-4 py-6 space-y-2">
-            
+
             <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
                   Main Menu
             </p>
@@ -56,8 +56,8 @@
 
 
             <a href="/student/dashboard"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/dashboard') 
-                ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/dashboard')
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-700 hover:bg-blue-50' }}">
 
                 🏠
@@ -67,10 +67,10 @@
 
 
             <a href="/student/discussions"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/discussions*') 
-                ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/discussions*')
+                ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-700 hover:bg-blue-50' }}">
-            
+
                 💬
                 <span>Discussions</span>
 
@@ -79,8 +79,8 @@
 
 
             <a href="/student/groups"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/groups*') 
-               ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/groups*')
+               ? 'bg-blue-600 text-white shadow-md'
                : 'text-slate-700 hover:bg-blue-50' }}">
                 👥
                 <span>Groups</span>
@@ -90,8 +90,8 @@
 
 
             <a href="/student/quizzes"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/quizzes*') 
-               ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/quizzes*')
+               ? 'bg-blue-600 text-white shadow-md'
                : 'text-slate-700 hover:bg-blue-50' }}">
                 📝
                 <span>Quizzes</span>
@@ -101,8 +101,8 @@
 
 
             <a href="/student/recommendations"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/recommendations*') 
-               ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/recommendations*')
+               ? 'bg-blue-600 text-white shadow-md'
                : 'text-slate-700 hover:bg-blue-50' }}">
                 🤖
                 <span>AI Recommendations</span>
@@ -112,8 +112,8 @@
 
 
             <a href="/student/notifications"
-               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/notifications*') 
-               ? 'bg-blue-600 text-white shadow-md' 
+               class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:translate-x-1 {{ request()->is('student/notifications*')
+               ? 'bg-blue-600 text-white shadow-md'
                : 'text-slate-700 hover:bg-blue-50' }}">
                 🔔
                 <span>Notifications</span>
@@ -184,8 +184,8 @@
 
 
     </aside>
-    
-    
+
+
 
 
 
@@ -199,7 +199,7 @@
 
         <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6">
 
-            
+
             <div class="flex items-center gap-4">
 
 
@@ -248,7 +248,7 @@
                    </span>
 
 
-                   <input 
+                   <input
                        type="text"
                        placeholder="Search..."
                        class="bg-transparent outline-none text-sm w-full">

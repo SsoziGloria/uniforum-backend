@@ -101,10 +101,12 @@ class GroupController extends Controller
         {
             $searchTerm = $request->query('search');
 
-            $groups = Group::when($searchTerm, function ($query, $searchTerm) {
-                return $query->where('group_name', 'like', "%{$searchTerm}%")
-                             ->orWhere('description', 'like', "%{$searchTerm}%");
-            })->get();
+            if (!empty($searchTerm)) {
+                    $query->where('group_name', 'like', "%{$searchTerm}%")
+                          ->orWhere('description', 'like', "%{$searchTerm}%");
+                }
+
+            $groups = $query->get();
 
             return response()->json([
                 'success' => true,
