@@ -71,7 +71,7 @@ class MessageController extends Controller
         $validated = $request->validate([
             'topic_id'           => 'nullable|integer|exists:topics,topic_id',
             'msg_txt'            => 'required|string',
-            'is_restricted'      => 'required|boolean',
+            'is_restricted'      => 'nullable|boolean',
             'excluded_user_ids'  => 'nullable|array',
             'excluded_user_ids.*'=> 'integer|exists:users,id'
         ]);
