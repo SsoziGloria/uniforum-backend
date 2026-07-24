@@ -1,1 +1,11 @@
-java-desktop-client/
+
+
+# Allow java-desktop-client source code, but ignore build/IDE junk:
+*.class
+*.log
+.idea/
+*.iml
+.vscode/
+target/
+build/
+.gradle/
