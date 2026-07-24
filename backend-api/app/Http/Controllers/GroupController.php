@@ -97,22 +97,25 @@ class GroupController extends Controller
         /**
          * Browse and search all groups in the system.
          */
-        public function search(Request $request)
-        {
-            $searchTerm = $request->query('search');
+       public function search(Request $request)
+       {
+           $searchTerm = $request->query('search');
 
-            if (!empty($searchTerm)) {
-                    $query->where('group_name', 'like', "%{$searchTerm}%")
-                          ->orWhere('description', 'like', "%{$searchTerm}%");
-                }
+           $query = Group::query();
 
-            $groups = $query->get();
+           // If a search term is provided, apply the filter. Otherwise, it returns all groups.
+           if (!empty($searchTerm)) {
+               $query->where('group_name', 'like', "%{$searchTerm}%")
+                     ->orWhere('description', 'like', "%{$searchTerm}%");
+           }
 
-            return response()->json([
-                'success' => true,
-                'data'    => $groups
-            ], 200);
-        }
+           $groups = $query->get();
+
+           return response()->json([
+               'success' => true,
+               'data'    => $groups
+           ], 200);
+       }
 
     /**
      * JOINING A GROUP
