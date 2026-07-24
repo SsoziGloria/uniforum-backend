@@ -101,7 +101,7 @@ class MessageController extends Controller
             'sender_id'     => $userId,
             'msg_txt'       => $validated['msg_txt'],
             'is_synced'     => true,
-            'is_restricted' => $validated['is_restricted'],
+            'is_restricted' => $validated['is_restricted'] ?? false,
             'posted_at'     => now(),
         ]);
 
@@ -113,7 +113,7 @@ class MessageController extends Controller
                     ]);
 
         // Process exclusions if message is set to restricted
-        if ($validated['is_restricted'] && $request->has('excluded_user_ids')) {
+        if (!empty($validated['is_restricted']) && $request->has('excluded_user_ids')) {
             foreach ($request->excluded_user_ids as $excludedId) {
                 MessageExclusion::create([
                     'msg_id'     => $message->msg_id,
