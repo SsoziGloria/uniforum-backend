@@ -41,28 +41,23 @@
 
         <div class="bg-white rounded-2xl border border-slate-200 p-8">
 
-            {{-- Backend:
-                 Load the selected group's details.
-            --}}
-
             <div>
 
                 <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
 
-                    Software Engineering
+                    Academic Group
 
                 </span>
 
                 <h2 class="mt-4 text-2xl font-bold text-slate-900">
 
-                    BSSE Year II Discussion Group
+                    {{ $group->group_name }}
 
                 </h2>
 
                 <p class="mt-3 text-slate-600">
 
-                    Discuss assignments, programming concepts, revision materials,
-                    course announcements and collaborate with classmates.
+                    {{ $group->description }}
 
                 </p>
 
@@ -118,19 +113,9 @@
 
             <!-- Agreement -->
 
-            <form method="POST" action="#">
+            <form method="POST" action="{{ route('student.groups.join.store',$group->group_id) }}">
 
-                {{-- Backend:
-                     Replace "#" with the route that joins
-                     the authenticated user to this group.
-
-                     Only register the member if the
-                     agreement checkbox is accepted.
-
-                     Otherwise return a validation error.
-                --}}
-
-                {{-- @csrf --}}
+                 @csrf
 
                 <div class="mt-8">
 
@@ -138,7 +123,8 @@
 
                         <input
                             type="checkbox"
-                            name="agree_rules"
+                            name="rules_accepted"
+                            value="1"
                             class="mt-1">
 
                         <span class="text-slate-700">
@@ -149,6 +135,15 @@
                         </span>
 
                     </label>
+                    @error('rules_accepted')
+
+                    <p class="text-red-500 text-sm mt-2">
+
+                    {{ $message }}
+
+                    </p>
+
+                    @enderror
 
                 </div>
 

@@ -1,15 +1,22 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupMemberController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\ParticipationController;
+use App\Http\Controllers\StudentPerformanceController;
+use App\Http\Controllers\RecommendationController;
+
+
 /*
 |--------------------------------------------------------------------------
-| Public Authentication Routes
+| Public Auth Routes
 |--------------------------------------------------------------------------
 */
 Route::post('/login', [AuthController::class, 'login']);
@@ -18,74 +25,101 @@ Route::post('/register', [AuthController::class, 'register']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Forum Routes (Requires Auth )
+| Protected Routes (Sanctum Auth)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum'])->group(function () {
 
-  // This allows authenticated users to securely authorize their private channels.
-      Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
-              // Force the broadcaster to use the user authenticated by Sanctum
-              $request->setUserResolver(fn () => auth('sanctum')->user());
+    // --- Authentication & Account ---
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 
-              return Broadcast::auth($request);
-          });
+    // --- Private Channel Broadcasting Auth ---
+    Route::post('/broadcasting/auth', function (Request $request) {
+        $request->setUserResolver(fn () => auth('sanctum')->user());
+        return Broadcast::auth($request);
+    });
 
-  // OFFLINE SYNC ROUTE:
-      Route::get('/messages/sync', [MessageController::class, 'sync']);
+    // --- General Utilities ---
+    Route::get('/messages/sync', [MessageController::class, 'sync']);
 
-    // --- GROUPS MANAGEMENT ---
-    // Get all groups the student belongs to
+    Route::get('/lecturer/students', [StudentPerformanceController::class, 'index'])
+    ->middleware('lecturer')
+    ->name('api.lecturer.students.index');
+
+    Route::get('/recommendations', [RecommendationController::class, 'index']);
+
+
+    /*
+    |----------------------------------------------------------------------
+    | Groups Management (Global / General)
+    |----------------------------------------------------------------------
+    */
+    // Note: 'search' MUST come before '{group}' to prevent dynamic binding conflicts
+    Route::get('/groups/search', [GroupController::class, 'search']);
     Route::get('/groups', [GroupController::class, 'index']);
-    // Create a new academic group (if allowed)
     Route::post('/groups', [GroupController::class, 'store']);
-    //Joining a group
-    Route::get('/groups/search', [GroupController::class, 'search']); // Browse and search groups
-    Route::post('/groups/{id}/join', [GroupController::class, 'join']); // Join a group with rules check
+    Route::get('/groups/{group}', [GroupController::class, 'show']);
+    Route::delete('/groups/{group}', [GroupController::class, 'destroy']);
+    Route::post('/groups/{id}/join', [GroupController::class, 'join']);
+    Route::delete('/groups/{group}/leave', [GroupController::class, 'leave']);
 
 
-/*
-      ----------------------------------------------------
-      Requires Auth &  Group Membership Verification
-      ----------------------------------------------------
-*/
-    // Add member endpoint (only current group members can add others)
+    /*
+    |----------------------------------------------------------------------
+    | Group Scope (Requires Group Membership)
+    |----------------------------------------------------------------------
+    */
+    Route::middleware(['group.member'])->prefix('groups/{group}')->group(function () {
 
-    Route::middleware(['group.member'])->group(function () {
-      Route::post('/groups/{group}/members', [GroupController::class, 'addMember']);
-      //The route to handle group role changes
-      Route::put('/groups/{group}/members/role', [GroupController::class, 'changeMemberRole']);
-      //Route to handle removing of members
-      Route::delete('/groups/{group}/remove-member', [GroupController::class, 'removeMember']);
+        // --- Group Overview & Stats ---
+        Route::get('/statistics', [GroupController::class, 'statistics']);
+        Route::get('/participation/results', [ParticipationController::class, 'results']);
+        Route::get('/participation/roster', [ParticipationController::class, 'groupRoster']); // <-- ADDED HERE
 
-      // --- TOPICS MANAGEMENT ---
-      // Fetch topics inside a specific group - only accessible if you are in that group
-      Route::get('/groups/{group}/topics', [TopicController::class, 'index']);
-      // Create a new topic inside a specific group
-      Route::post('/groups/{group}/topics', [TopicController::class, 'store']);
-      // --- UNIFIED MESSAGES ---
-       Route::get('/groups/{group}/messages', [MessageController::class, 'getMessages']);
-       Route::post('/groups/{group}/messages', [MessageController::class, 'store']);
-      //Pdf export
-      Route::get('/groups/{group}/topics/{id}/export', [TopicController::class, 'exportPdf']);
+        // --- Group Members Management ---
+        Route::get('/members', [GroupController::class, 'getGroupMembers']);
+        Route::put('/members/{user}/role', [GroupMemberController::class, 'updateRole']);
+        Route::post('/members/{user}/warning', [GroupMemberController::class, 'issueWarning']);
+        Route::post('/members/{user}/blacklist', [GroupMemberController::class, 'blacklist']);
+        Route::post('/members/{user}/reinstate', [GroupMemberController::class, 'reinstate']);
+        
+    Route::post('/members/{user}/promote', [GroupMemberController::class, 'promoteMember']);
+    Route::post('/members/{user}/demote', [GroupMemberController::class, 'demoteMember']);
 
+        // --- General Group Chat Messages ---
+        Route::get('/messages', [MessageController::class, 'getMessages']);
+        Route::post('/messages', [MessageController::class, 'store']);
 
-      // --- GROUP MEMBER ---
-      // Fetch all members belonging to a specific group
-      Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
+        // --- Topics / Forum Threads ---
+        Route::prefix('topics')->group(function () {
+            Route::get('/', [TopicController::class, 'index']);
+            Route::post('/', [TopicController::class, 'store']);
+            Route::get('/{topic}', [TopicController::class, 'show']);
+            Route::delete('/{topic}', [MessageController::class, 'destroyTopic']);
+            Route::get('/{id}/export', [TopicController::class, 'exportPdf']);
+
+            // --- Topic Discussion Messages & Answers ---
+            Route::prefix('{topic}/messages')->group(function () {
+                Route::post('/', [MessageController::class, 'store']);
+                Route::post('/{message}/reply', [MessageController::class, 'reply']);
+                Route::post('/{message}/answer', [MessageController::class, 'markAnswer']);
+                Route::post('/{message}/upvote', [MessageController::class, 'upvote']);
+                Route::delete('/{message}', [MessageController::class, 'destroy']);
+            });
         });
 
-      // --- QUIZZES MANAGEMENT ---
-      Route::get('/groups/{group}/quizzes', [QuizController::class, 'index']);
-      Route::post('/groups/{group}/quizzes', [QuizController::class, 'store'])->middleware('lecturer'); // Configure/Publish Quiz (Lecturers)
+        // --- Quizzes ---
+        Route::prefix('quizzes')->group(function () {
+            Route::get('/', [QuizController::class, 'index']);
+            Route::post('/', [QuizController::class, 'store'])->middleware('lecturer');
+            Route::post('/{quiz}/launch', [QuizController::class, 'launchQuiz']);
+            Route::post('/{quiz}/start', [QuizController::class, 'startAttempt']);
+            Route::post('/{quiz}/submit', [QuizController::class, 'submitAttempt']);
+            Route::get('/{quiz}/results', [QuizController::class, 'resultsReport']);
+        });
 
-      // --- QUIZ ATTEMPTS ---
-      Route::post('/groups/{group}/quizzes/{quiz}/start', [QuizController::class, 'startAttempt']); // Initialize submission & get questions
-      Route::post('/groups/{group}/quizzes/{quiz}/submit', [QuizController::class, 'submitAttempt']); // Process & score responses
-      Route::post('/groups/{group}/quizzes/{quiz}/launch', [QuizController::class, 'launchQuiz']);
-      // --- PERFORMANCE REPORTS ---
-      Route::get('/groups/{group}/quizzes/{quiz}/results', [QuizController::class, 'resultsReport']); // Shared reports
+    });
 
 });
-
-

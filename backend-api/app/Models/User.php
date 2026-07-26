@@ -74,4 +74,13 @@ class User extends Authenticatable
      {
          return $this->belongsToMany(\App\Models\Group::class, 'group_members', 'user_id', 'group_id');
      }
+
+     public function participationScores()
+    {
+        return $this->hasMany(
+           ParticipationScore::class,
+           'student_id',
+           'id'
+        );
+    }
 }

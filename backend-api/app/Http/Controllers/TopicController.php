@@ -5,22 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\Topic;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\DiscussionService;
 
 class TopicController extends Controller
 {
+    protected DiscussionService $discussionService;
+
+    public function __construct(DiscussionService $discussionService)
+    {
+        $this->discussionService = $discussionService;
+    } 
+
     /**
      * Display a listing of the resource.
      */
     public function index($groupId)
     {
-        $groupIdClean = is_object($groupId) ? $groupId->id : $groupId;
-        $topics = Topic::where('group_id', $groupIdClean)->orderBy('created_at', 'desc')->get();
-
+        $statistics = $this->discussionService
+            ->index(
+                $groupId,
+                auth()->id()
+            );
 
         return response()->json([
-                    'success' => true,
-                    'data' => $topics
-                ], 200);
+            'success' => true,
+            'data'    => $statistics
+        ], 200);
     }
 
     /**
@@ -28,50 +38,68 @@ class TopicController extends Controller
      */
     public function store(Request $request, $groupId)
     {
-        // Validate that the topic has a name and belongs to an existing group
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string'
-            ]);
-            $groupIdClean = is_object($groupId) ? $groupId->id : $groupId;
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'ml_category' => 'nullable|string|max:100',
+        ]);
 
-            //Create and save the topic
-            $topic = Topic::create([
-            'group_id' => $groupIdClean,
-            'title'    => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'created_by' => $request->user()->id,
-            'created_at'  => now(),
-            ]);
+        $result = $this->discussionService->store(
+            $validated,
+            $groupId,
+            $request->user()->id
+        );
 
-            // Return the created topic
+        if (!$result['success']) {
             return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 403);
+        }
+
+        return response()->json([
             'success' => true,
-            'message' => 'Topic created successfully!',
-            'data' => $topic
-            ], 201);
+            'message' => $result['message'],
+            'data'    => $result['topic']
+        ], 201);
     }
 
-   public function exportPdf($group, $id)
-   {
-       // Find the topic making sure it belongs to that specific group
-       $topic = Topic::where('group_id', $group)->where('topic_id', $id)->firstOrFail();
+    public function exportPdf($group, $id)
+    {
+        $topic = Topic::where('group_id', $group)->where('topic_id', $id)->firstOrFail();
+        
+        $messages = $topic->messages()
+            ->whereNull('parent_msg_id')
+            ->with([
+                'sender',
+                'replies' => function ($query) {
+                    $query->with(['sender', 'replies']);
+                }
+            ])
+            ->orderBy('posted_at')
+            ->get();
 
-       // Fetch messages for this topic u
-       $messages = $topic->messages;
+        $pdf = Pdf::loadView('pdf.topic', compact('topic', 'messages'));
 
-       // Load into the PDF compiler
-       $pdf = Pdf::loadView('pdf.topic', compact('topic', 'messages'));
-
-       return $pdf->download("topic-{$id}-chats.pdf");
-   }
+        return $pdf->download("Discussion-{$id}-messages.pdf");
+    }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($groupId, $topicId)
     {
-        //
+        $discussion = $this->discussionService
+            ->show(
+                $groupId,
+                $topicId,
+                auth()->id()
+            );
+
+        return response()->json([
+            'success' => true,
+            'data'    => $discussion
+        ]);
     }
 
     /**
@@ -85,8 +113,26 @@ class TopicController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($groupId, $topicId)
     {
-        //
+        $userId = auth()->id() ?? request()->user()?->id;
+
+        $result = $this->discussionService->deleteDiscussion(
+            (int) $groupId,
+            (int) $topicId,
+            (int) $userId
+        );
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ], 200);
     }
 }

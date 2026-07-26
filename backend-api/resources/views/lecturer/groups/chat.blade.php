@@ -10,532 +10,147 @@
 
     <div class="max-w-5xl mx-auto px-6 py-8 space-y-6">
 
-
         <!-- Chat Header -->
-
-        <div class="bg-white rounded-2xl border border-slate-200 p-6">
-
-
-            <a href="/lecturer/groups/show"
-               class="text-sm text-blue-600 hover:underline">
-
-                ← Back to Group
-
-            </a>
-
-
-
-            <h1 class="mt-4 text-2xl font-bold text-slate-900">
-                BSSE Year II Discussion Group Chat
-            </h1>
-
-
-            <p class="text-slate-500 mt-2">
-                Communicate with members of this group.
-            </p>
-
-
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex items-center justify-between">
+            <div>
+                <a href="{{ route('lecturer.groups.show', $group->group_id ?? $group->id) }}" class="text-sm text-blue-600 hover:underline flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Group
+                </a>
+                <h1 class="mt-2 text-2xl font-bold text-slate-900">
+                    {{ $group->group_name }} Discussion Group Chat
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">
+                    Communicate with members of this group.
+                </p>
+            </div>
         </div>
-
-
-
-
 
         <!-- Messages Area -->
-
         <div class="bg-white rounded-2xl border border-slate-200 p-6 h-[500px] overflow-y-auto">
 
-
-
-            <!-- Loading State -->
-
-            {{-- Backend:
-                 Display while messages are being retrieved.
-            --}}
-
-            <div class="hidden text-center py-20">
-
-
-                <div class="text-slate-500">
-
-                    Loading messages...
-
-                </div>
-
-
-            </div>
-
-
-
-
-
-
             <!-- Empty Chat State -->
-
-            {{-- Backend:
-                 Display when the group has no messages yet.
-            --}}
-
-            <div class="hidden text-center py-20">
-
-
-                <div class="text-4xl mb-4">
-
-                    💬
-
+            @if($messages->isEmpty())
+                <div class="text-center py-20">
+                    <div class="text-4xl mb-4">💬</div>
+                    <h3 class="text-lg font-semibold text-slate-800">No messages yet</h3>
+                    <p class="text-slate-500 mt-2">Start the conversation with your group members.</p>
                 </div>
-
-
-                <h3 class="text-lg font-semibold text-slate-800">
-
-                    No messages yet
-
-                </h3>
-
-
-                <p class="text-slate-500 mt-2">
-
-                    Start the conversation with your group members.
-
-                </p>
-
-
-            </div>
-
-
-
-
-
-
-
-            <!-- Error State -->
-
-            {{-- Backend:
-                 Display if messages cannot be loaded.
-            --}}
-
-            <div class="hidden text-center py-20">
-
-
-                <div class="text-4xl mb-4">
-
-                    ⚠
-
-                </div>
-
-
-                <h3 class="text-lg font-semibold text-slate-800">
-
-                    Unable to load messages
-
-                </h3>
-
-
-                <p class="text-slate-500 mt-2">
-
-                    Please try again.
-
-                </p>
-
-
-                <button
-                    class="mt-4 px-5 py-2 rounded-xl bg-blue-600 text-white">
-
-                    Retry
-
-                </button>
-
-
-            </div>
-
-
-
-
-
-
-
-            <!-- No Access State -->
-
-            {{-- Backend:
-                 Display when user is removed,
-                 blacklisted or no longer belongs to group.
-            --}}
-
-            <div class="hidden text-center py-20">
-
-
-                <div class="text-4xl mb-4">
-
-                    🔒
-
-                </div>
-
-
-                <h3 class="text-lg font-semibold text-slate-800">
-
-                    You cannot access this chat
-
-                </h3>
-
-
-                <p class="text-slate-500 mt-2">
-
-                    You are no longer a member of this group.
-
-                </p>
-
-
-            </div>
-
-
-
-
-
-
+            @endif
 
             <!-- Messages List -->
-
-            {{-- Backend:
-                 Retrieve messages belonging to this group.
-            --}}
-
-
-
-            <!-- Received Message -->
-
-
-            <div class="mb-6">
-
-
-                <div class="flex items-center gap-3">
-
-
-                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-
-                        S
-
+            @foreach($messages as $message)
+                @if($message->sender_id == auth()->id())
+                    <!-- User's own message (right side) -->
+                    <div class="mb-6 flex justify-end group">
+                        <div class="max-w-xl">
+                            <div class="bg-blue-600 text-white rounded-xl p-4 relative shadow-sm">
+                                {{ $message->msg_txt }}
+                            </div>
+                            <div class="flex items-center justify-end gap-3 mt-1">
+                                <p class="text-xs text-slate-500">
+                                   {{ optional($message->posted_at)->diffForHumans() }}
+                                </p>
+                                <!-- Delete Button -->
+                                <form method="POST" action="{{ route('lecturer.groups.chat.messages.destroy', ['group' => $group->group_id ?? $group->id, 'message' => $message->msg_id ?? $message->id]) }}" onsubmit="return confirm('Delete this message?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs text-red-500 hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-
-
-
-                    <div>
-
-
-                        <p class="font-medium text-slate-800">
-
-                            Sarah Namukasa
-
-                        </p>
-
-
-                        <p class="text-xs text-slate-500">
-
-                            10 minutes ago
-
-                        </p>
-
-
+                @else
+                    <!-- Other members' messages (left side) -->
+                    <div class="mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
+                               {{ strtoupper(substr(optional($message->sender)->name ?? 'U', 0, 1)) }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-slate-800 text-sm">
+                                    {{ optional($message->sender)->name ?? 'User' }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ optional($message->posted_at)->diffForHumans() }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-3 bg-slate-100 text-slate-800 rounded-xl p-4 max-w-xl shadow-sm text-sm">
+                            {{ $message->msg_txt }}
+                        </div>
                     </div>
-
-
-                </div>
-
-
-
-
-                <div class="mt-3 bg-slate-100 rounded-xl p-4 max-w-xl">
-
-                    Has anyone completed the database assignment?
-
-                </div>
-
-
-            </div>
-
-
-
-
-
-
-
-            <!-- Sent Message -->
-
-
-            <div class="mb-6 flex justify-end">
-
-
-                <div class="max-w-xl">
-
-
-                    <div class="bg-blue-600 text-white rounded-xl p-4">
-
-                        I have completed mine. I can share my approach.
-
-                    </div>
-
-
-                    <p class="text-xs text-slate-500 mt-1 text-right">
-
-                        Sent to all members
-
-                    </p>
-
-
-                </div>
-
-
-            </div>
-
-
-
+                @endif
+            @endforeach
 
         </div>
-
-
-
-
-
-
-
 
         <!-- Message Input -->
-
-
         <div class="bg-white rounded-2xl border border-slate-200 p-6">
-
-
-            <form>
-
-
+            <form method="POST" action="{{ route('lecturer.groups.chat.store', $group->group_id ?? $group->id) }}">
+                @csrf
 
                 <textarea
+                    name="msg_txt"
                     rows="3"
                     placeholder="Write a message..."
-                    class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500 text-sm" required></textarea>
 
+                <!-- Message Visibility + Exclude Members Wrapper -->
+                <div x-data="{ restricted: false }">
+                    <div class="mt-5">
+                        <h3 class="font-semibold text-slate-800">Message Visibility</h3>
+                        <p class="text-sm text-slate-500 mt-1">Choose who can view this message.</p>
 
+                        <div class="mt-4 space-y-3 text-sm">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="is_restricted" value="0" checked x-on:change="restricted = false" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-slate-700">All group members</span>
+                            </label>
 
-
-
-
-                <!-- Communication Visibility -->
-
-
-                <div class="mt-5">
-
-
-                    <h3 class="font-semibold text-slate-800">
-
-                        Message Visibility
-
-                    </h3>
-
-
-
-                    <p class="text-sm text-slate-500 mt-1">
-
-                        Choose who can view this message.
-
-                    </p>
-
-
-
-
-
-                    <div class="mt-4 space-y-3">
-
-
-
-                        <label class="flex items-center gap-3">
-
-
-                            <input
-                                type="radio"
-                                name="visibility"
-                                checked>
-
-
-                            <span>
-
-                                All group members
-
-                            </span>
-
-
-                        </label>
-
-
-
-
-
-
-
-                        <label class="flex items-center gap-3">
-
-
-                            <input
-                                type="radio"
-                                name="visibility">
-
-
-                            <span>
-
-                                Select members who should NOT see this message
-
-                            </span>
-
-
-                        </label>
-
-
-
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="is_restricted" value="1" x-on:change="restricted = true" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-slate-700">Select members who should NOT see this message</span>
+                            </label>
+                        </div>
                     </div>
 
+                    <!-- Exclude Members -->
+                    <div x-show="restricted" x-transition class="mt-6 bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <h3 class="font-semibold text-slate-800">Exclude Members</h3>
+                        <p class="text-sm text-slate-500 mt-1">Select members who should not receive this message.</p>
 
-                </div>
-
-
-
-
-
-
-
-
-
-                <!-- Exclude Members -->
-
-
-                <div class="mt-6 bg-slate-50 rounded-xl p-5">
-
-
-                    <h3 class="font-semibold text-slate-800">
-
-                        Exclude Members
-
-                    </h3>
-
-
-
-                    <p class="text-sm text-slate-500 mt-1">
-
-                        Select members who should not receive this message.
-
-                    </p>
-
-
-
-
-
-                    {{-- Backend:
-                         Retrieve group members dynamically.
-                    --}}
-
-
-                    <div class="mt-4 space-y-3">
-
-
-
-                        <label class="flex items-center gap-3">
-
-                            <input type="checkbox">
-
-
-                            <span>
-                                Sarah Namukasa
-                                <span class="text-sm text-slate-500">
-                                    (Student)
-                                </span>
-                            </span>
-
-
-                        </label>
-
-
-
-
-
-                        <label class="flex items-center gap-3">
-
-                            <input type="checkbox">
-
-
-                            <span>
-                                Dr. John Doe
-                                <span class="text-sm text-slate-500">
-                                    (Lecturer)
-                                </span>
-                            </span>
-
-
-                        </label>
-
-
-
-
-
-
-                        <label class="flex items-center gap-3">
-
-                            <input type="checkbox">
-
-
-                            <span>
-                                Peter Okello
-                                <span class="text-sm text-slate-500">
-                                    (Student)
-                                </span>
-                            </span>
-
-
-                        </label>
-
-
-
+                        <div class="mt-4 space-y-3 text-sm">
+                            @foreach($members as $member)
+                                @if(($member->user_id ?? $member->id) != auth()->id())
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" name="excluded_user_ids[]" value="{{ $member->user_id ?? $member->id }}" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700">
+                                            {{ optional($member->user)->name ?? $member->name }}
+                                            <span class="text-xs text-slate-500">({{ ucfirst($member->role ?? optional($member->pivot)->role ?? 'Member') }})</span>
+                                        </span>
+                                    </label>
+                                @endif
+                            @endforeach
+                        </div>
                     </div>
-
-
                 </div>
-
-
-
-
-
-
-
 
                 <!-- Send Button -->
-
-
                 <div class="mt-6 flex justify-end">
-
-
-                    <button
-                        type="submit"
-                        class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
-
-
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium text-sm transition">
                         Send Message
-
-
                     </button>
-
-
                 </div>
-
-
-
             </form>
-
-
         </div>
-
-
-
 
     </div>
 
-
 </div>
-
 
 @endsection

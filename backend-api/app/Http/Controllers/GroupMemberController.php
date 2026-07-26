@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\GroupMember;
+use App\Services\GroupMemberService;
 
 class GroupMemberController extends Controller
 {
+    protected GroupMemberService $groupMemberService;
+
+    public function __construct(GroupMemberService $groupMemberService)
+    {
+        $this->groupMemberService = $groupMemberService;
+    }
     /**
      * Update a group member's role.
      * Accessible by both 'admin' and 'lecturer' roles.
@@ -14,60 +21,136 @@ class GroupMemberController extends Controller
     public function updateRole(Request $request, $group, $user)
     {
         $validated = $request->validate([
-            'role' => 'required|string|in:admin,lecturer,member',
+            'role' => 'required|string|in:admin,lecturer,member'
         ]);
 
-        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int)$group;
-        $targetUserId = is_object($user) ? ($user->id) : (int)$user;
-        $currentUserId = $request->user()->id;
+        $result = $this->groupMemberService->changeMemberRole(
+            $group,
+            $request->user()->id,
+            $user,
+            $validated['role']
+        );
 
-        $isAuthorized = false;
-
-        // GLOBAL LECTURER BYPASS
-        // If they are globally a lecturer, skip group-level checks!
-        if (isset($currentUser->role) && $currentUser->role === 'lecturer') {
-                    $isAuthorized = true;
-                }
-         else{
-        // Ensure the logged-in user has administrative power (must be 'admin' or 'lecturer')
-        $currentUserMembership = GroupMember::where('group_id', $groupId)
-            ->where('user_id', $currentUserId)
-            ->first();
-
-        if ($currentUserMembership && in_array($currentUserMembership->role, ['admin', 'lecturer'])) {
-                        $isAuthorized = true;
-             }
-         }
-
-      //if neither condition met, block access
-       if (!$isAuthorized) {
-              return response()->json([
-                  'status' => 'Error',
-                  'message' => 'Access Denied: Only group administrators or lecturers can modify roles.'
-                 ], 403);
-             }
-
-
-        // Fetch the target member to update
-        $targetMembership = GroupMember::where('group_id', $groupId)
-            ->where('user_id', $targetUserId)
-            ->first();
-
-        if (!$targetMembership) {
+        if (!$result['success']) {
             return response()->json([
                 'status' => 'Error',
-                'message' => 'The target user is not a member of this group.'
-            ], 404);
+                'message' => $result['message']
+            ], 403);
         }
-
-        //Update their role
-        $targetMembership->update([
-            'role' => $validated['role']
-        ]);
 
         return response()->json([
             'status' => 'Success',
-            'message' => "User's role has been successfully updated to " . $validated['role']
-        ], 200);
+            'message' => $result['message']
+        ]);
     }
+
+    /**
+     * Issue warning to member
+     */
+    public function issueWarning($group,$user)
+    {
+
+        $result = $this->groupMemberService
+            ->issueWarning(
+                $group,
+                $user
+            );
+
+
+        return response()->json($result);
+
+    }
+
+    /**
+     * Blacklist member
+     */
+    public function blacklist($group,$user)
+    {
+
+        $result = $this->groupMemberService
+            ->blacklistMember(
+                $group,
+                $user
+            );
+
+
+        return response()->json($result);
+
+    }
+
+    /**
+     * Reinstate member
+     */
+    public function reinstate($group,$user)
+    {
+
+        $result = $this->groupMemberService
+            ->reinstateMember(
+                $group,
+                $user
+            );
+
+
+        return response()->json($result);
+
+    }
+    /**
+    * Promote a group member to administrator.
+    */
+    public function promoteMember($group, $user)
+   {
+
+        $result = $this->groupMemberService
+           ->changeMemberRole(
+               $group,
+               request()->user()->id,
+               $user,
+               'admin'
+            );
+
+
+        if(!$result['success']){
+
+            return response()->json([
+               'success'=>false,
+               'message'=>$result['message']
+            ],403);
+
+        }
+
+
+        return response()->json([
+            'success'=>true,
+            'message'=>'Member promoted to group administrator successfully.'
+        ]);
+
+    }
+
+    /**
+     * Demote a group administrator to standard member status.
+     */
+    public function demoteMember(Request $request, $group, $user)
+    {
+        $result = $this->groupMemberService->changeMemberRole(
+            (int) $group,
+            $request->user()->id,
+            (int) $user,
+            'member'
+        );
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message']
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message']
+        ]);
+    }
+
+
+
 }
