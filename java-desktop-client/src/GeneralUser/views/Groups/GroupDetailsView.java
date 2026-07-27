@@ -1,7 +1,7 @@
-package Student.Groups;
+package GeneralUser.views.Groups;
 
 import GeneralUser.api.ApiClient;
-import Student.Groups.Discussions.NewDiscussionView;
+import Student.Discussions.NewDiscussionView;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -109,14 +109,8 @@ public class GroupDetailsView extends JPanel {
             if (!isMember) {
                 JOptionPane.showMessageDialog(this, "You must join this group before posting new discussions.", "Membership Required", JOptionPane.WARNING_MESSAGE);
             } else {
-<<<<<<< HEAD:java-desktop-client/src/Student/Groups/GroupDetailsView.java
-                // Handle new discussion logic here
-            NewDiscussionView createView = new NewDiscussionView(groupId, authToken);
-            createView.setVisible(true);
-=======
                 NewDiscussionView createView = new NewDiscussionView(groupId, authToken);
                 createView.setVisible(true);
->>>>>>> Tracy-java-ui:java-desktop-client/src/GeneralUser/views/Groups/GroupDetailsView.java
             }
         });
 
@@ -129,13 +123,9 @@ public class GroupDetailsView extends JPanel {
         if (!isMember) {
             JButton joinGroupBtn = createStyledButton("Join Group", PRIMARY_BLUE, Color.WHITE);
             joinGroupBtn.addActionListener(e -> {
-<<<<<<< HEAD:java-desktop-client/src/Student/Groups/GroupDetailsView.java
-                if (onJoinClicked != null) onJoinClicked.run();
-=======
                 if (onJoinClicked != null) {
                     onJoinClicked.run();
                 }
->>>>>>> Tracy-java-ui:java-desktop-client/src/GeneralUser/views/Groups/GroupDetailsView.java
             });
             btnGrid.add(joinGroupBtn);
         }

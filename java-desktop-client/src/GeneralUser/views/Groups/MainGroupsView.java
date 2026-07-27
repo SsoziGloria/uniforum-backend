@@ -1,11 +1,11 @@
-package Student.Groups;
+package GeneralUser.views.Groups;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import GeneralUser.api.ApiClient;
-import Student.Groups.Discussions.GroupTopicsView;
-import Student.Groups.Discussions.TopicDetailView;
+import Student.Discussions.GroupTopicsView;
+import Student.Discussions.TopicDetailView;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -324,144 +324,6 @@ private final java.util.function.BiConsumer<Integer, Integer> onOpenTopicClicked
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 fetchAndOpenGroupDetails(groupId);
-<<<<<<< HEAD:java-desktop-client/src/Student/Groups/MainGroupsView.java
-            }
-        };
-
-        card.addMouseListener(clickAdapter);
-        
-        // Ensure inner text components also pass clicks through to the card
-        for (Component comp : leftContent.getComponents()) {
-            comp.addMouseListener(clickAdapter);
-        }
-
-        return card;
-    }
-    
-   // --- FETCH GROUP DETAILS AND EXTRACT "is_admin" & "is_member" FLAGS ---
-   // --- FETCH GROUP DETAILS AND EXTRACT "is_admin" & "is_member" FLAGS ---
-    private void fetchAndOpenGroupDetails(int groupId) {
-        new Thread(() -> {
-            String response = ApiClient.get("/groups/" + groupId, authToken);
-            boolean isAdmin = false;
-            boolean isMember = false; 
-            String fetchedGroupName = "";
-            String fetchedDescription = "";
-
-            try {
-                if (response != null && !response.isEmpty()) {
-                    String jsonBody = response;
-                    if (response.contains(":")) {
-                        int firstColon = response.indexOf(":");
-                        try {
-                            Integer.parseInt(response.substring(0, firstColon).trim());
-                            jsonBody = response.substring(firstColon + 1).trim();
-                        } catch (NumberFormatException ignored) {}
-                    }
-
-                    isAdmin = extractBoolean(jsonBody, "is_admin");
-                    isMember = extractBoolean(jsonBody, "is_member");
-
-                    if (!isMember) {
-                        String userRole = extractJsonValue(jsonBody, "user_role");
-                        if (userRole != null && !userRole.isEmpty() && !userRole.equalsIgnoreCase("null")) {
-                            isMember = true;
-                        }
-                    }
-
-                    fetchedGroupName = extractJsonValue(jsonBody, "group_name");
-                    if (fetchedGroupName.isEmpty()) fetchedGroupName = extractJsonValue(jsonBody, "name");
-                    
-                    fetchedDescription = extractJsonValue(jsonBody, "description");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            final boolean adminStatus = isAdmin;
-            final boolean memberStatus = isMember; 
-            final String gName = fetchedGroupName.isEmpty() ? "Group Details" : fetchedGroupName;
-            final String gDesc = fetchedDescription.isEmpty() ? "No description provided." : fetchedDescription;
-
-            SwingUtilities.invokeLater(() -> {
-                Container parent = this.getParent();
-                if (parent != null && parent.getLayout() instanceof CardLayout) {
-                    CardLayout cl = (CardLayout) parent.getLayout();
-
-                   GroupDetailsView detailsView = new GroupDetailsView(
-    groupId,
-    "Academic Group",
-    gName,
-    gDesc,
-    memberStatus, 
-    adminStatus,  
-    authToken,
-    () -> cl.show(parent, "GROUPS"), 
-    () -> { /* Handle join action if needed */ },
-    () -> { 
-        // Open Chat View and register it properly
-        openChatView(groupId, gName); 
-    },
-    () -> { /* View members action */ },
-    topicId -> {  
-        // When topic button is clicked, open Topic Detail View directly
-        String detailCardName = "TOPIC_DETAIL_VIEW_" + groupId + "_" + topicId;
-        TopicDetailView detailView = new TopicDetailView(
-            groupId,
-            topicId,
-            authToken,
-            () -> cl.show(parent, "GROUP_DETAILS_" + groupId)
-        );
-
-        parent.add(detailView, detailCardName);
-        cl.show(parent, detailCardName);
-        parent.revalidate();
-        parent.repaint();
-    }
-);
-
-String detailCardName = "GROUP_DETAILS_" + groupId;
-parent.add(detailsView, detailCardName);
-cl.show(parent, detailCardName);
-                }
-            });
-        }).start();
-    }
-   private void openChatView(int groupId, String groupName) {
-    Container parent = this.getParent();
-    if (parent != null && parent.getLayout() instanceof CardLayout) {
-        CardLayout cl = (CardLayout) parent.getLayout();
-        String detailsCardName = "GROUP_DETAILS_" + groupId;
-        
-        ChatView chatView = new ChatView(
-            groupId, 
-            null,                                  
-            groupName,                             
-            "Live Academic Discussion Stream", 
-            authToken,                             
-            currentUserName,                   
-            () -> cl.show(parent, detailsCardName), // FIXED: Returns to Group Details instead of main list
-            selectedTopicId -> {                  
-                String detailCardName = "TOPIC_DETAIL_VIEW_" + groupId + "_" + selectedTopicId;
-                TopicDetailView detailView = new TopicDetailView(
-                    groupId,
-                    selectedTopicId,
-                    authToken,
-                    () -> cl.show(parent, "CHAT_VIEW_" + groupId)
-                );
-                parent.add(detailView, detailCardName);
-                cl.show(parent, detailCardName);
-                parent.revalidate();
-                parent.repaint();
-            }
-        );
-
-        parent.add(chatView, "CHAT_VIEW_" + groupId);
-        cl.show(parent, "CHAT_VIEW_" + groupId);
-    }
-}
-
-=======
             }
         };
 
@@ -583,7 +445,6 @@ private void fetchAndOpenGroupDetails(int groupId) {
         });
     }).start();
 }
->>>>>>> Tracy-java-ui:java-desktop-client/src/GeneralUser/views/Groups/MainGroupsView.java
    private boolean extractBoolean(String json, String key) {
         try {
             // If the JSON contains a "data" wrapper object, make sure we look inside it

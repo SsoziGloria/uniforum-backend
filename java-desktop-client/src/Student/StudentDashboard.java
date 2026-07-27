@@ -2,13 +2,13 @@ package Student;
 
 import GeneralUser.api.ApiClient;
 import GeneralUser.views.LoginForm;
-import Student.Groups.MainGroupsView;
-import Student.Groups.Discussions.TopicDetailView;
-import Student.Groups.BrowseGroupsView;
-import Student.Groups.GroupDetailsView;
-import Student.Groups.ChatView;
-import Student.Groups.CreateGroupView;
-import Student.Groups.JoinGroupView;
+import GeneralUser.views.Groups.BrowseGroupsView;
+import GeneralUser.views.Groups.ChatView;
+import GeneralUser.views.Groups.CreateGroupView;
+import GeneralUser.views.Groups.GroupDetailsView;
+import GeneralUser.views.Groups.JoinGroupView;
+import GeneralUser.views.Groups.MainGroupsView;
+import Student.Discussions.TopicDetailView;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -220,24 +220,6 @@ public class StudentDashboard extends JFrame {
 );
 contentCards.add(mainGroupsView, "GROUPS");
 
-<<<<<<< HEAD
-        contentCards.add(new CreateGroupView(
-            authToken,
-            () -> {
-                mainGroupsView.refreshData();
-                cardLayout.show(contentCards, "GROUPS");
-            },
-            () -> cardLayout.show(contentCards, "GROUPS")
-        ), "CREATE_GROUP");
-        
-        browseGroupsView = new BrowseGroupsView(
-            authToken,
-            () -> cardLayout.show(contentCards, "GROUPS"),
-            groupId -> openBrowseGroupDetails(groupId),
-            groupId -> openBrowseGroupJoin(groupId)
-        );
-        contentCards.add(browseGroupsView, "BROWSE_GROUPS");
-=======
 contentCards.add(new CreateGroupView(
     authToken,
     () -> {
@@ -254,7 +236,6 @@ browseGroupsView = new BrowseGroupsView(
     groupId -> openBrowseGroupJoin(groupId)
 );
 contentCards.add(browseGroupsView, "BROWSE_GROUPS");
->>>>>>> Tracy-java-ui
 
         contentCards.add(createPlaceholderPanel("Discussions Module"), "DISCUSSIONS");
         contentCards.add(createPlaceholderPanel("Quizzes Module"), "QUIZZES");
