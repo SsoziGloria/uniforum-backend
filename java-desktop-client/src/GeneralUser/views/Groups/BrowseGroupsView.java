@@ -35,6 +35,8 @@ public class BrowseGroupsView extends JPanel {
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBackground(PAGE_BG);
+        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        headerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         JButton backBtn = new JButton("← Back to Groups");
         backBtn.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -66,15 +68,18 @@ public class BrowseGroupsView extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
 
         // --- CONTENT GRID CONTAINER ---
-        contentContainer = new JPanel(new BorderLayout());
+        contentContainer = new JPanel();
+        contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
         contentContainer.setBackground(PAGE_BG);
         contentContainer.setBorder(new EmptyBorder(20, 0, 0, 0));
+        contentContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Search Bar Field
         searchField = new JTextField("Search available groups...");
         searchField.setFont(new Font("SansSerif", Font.PLAIN, 13));
         searchField.setForeground(MUTED_TEXT);
         searchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        searchField.setAlignmentX(Component.LEFT_ALIGNMENT);
         searchField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(8, 12, 8, 12)
@@ -107,20 +112,28 @@ public class BrowseGroupsView extends JPanel {
         JPanel topSearchPanel = new JPanel();
         topSearchPanel.setLayout(new BoxLayout(topSearchPanel, BoxLayout.Y_AXIS));
         topSearchPanel.setBackground(PAGE_BG);
+        topSearchPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        topSearchPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         topSearchPanel.add(searchField);
         topSearchPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        contentContainer.add(topSearchPanel, BorderLayout.NORTH);
+        contentContainer.add(topSearchPanel);
 
         // Cards Grid (2 Column layout)
         cardsGrid = new JPanel(new GridLayout(0, 2, 16, 16));
         cardsGrid.setBackground(PAGE_BG);
+        cardsGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        contentContainer.add(cardsGrid, BorderLayout.CENTER);
+        contentContainer.add(cardsGrid);
 
-        JScrollPane scrollPane = new JScrollPane(contentContainer);
+        JScrollPane scrollPane = new JScrollPane(
+            contentContainer,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setWheelScrollingEnabled(true);
         add(scrollPane, BorderLayout.CENTER);
     
         refreshData();
@@ -262,6 +275,8 @@ public class BrowseGroupsView extends JPanel {
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(20, 20, 20, 20)
         ));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 210));
 
         JLabel badge = new JLabel(tag);
         badge.setFont(new Font("SansSerif", Font.BOLD, 11));
