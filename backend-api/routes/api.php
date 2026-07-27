@@ -37,11 +37,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // --- GROUPS MANAGEMENT ---
     // Get all groups the student belongs to
     Route::get('/groups', [GroupController::class, 'index']);
+    // Browse and search groups
+    Route::get('/groups/search', [GroupController::class, 'search']);
     // Create a new academic group (if allowed)
     Route::post('/groups', [GroupController::class, 'store']);
     //Joining a group
-    Route::get('/groups/search', [GroupController::class, 'search']); // Browse and search groups
     Route::post('/groups/{id}/join', [GroupController::class, 'join']); // Join a group with rules check
+    Route::get('/groups/{id}', [GroupController::class, 'show']);
 
 
 /*
@@ -61,6 +63,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
       // --- TOPICS MANAGEMENT ---
       // Fetch topics inside a specific group - only accessible if you are in that group
       Route::get('/groups/{group}/topics', [TopicController::class, 'index']);
+      // Route to get a specific topic's details
+      Route::get('/groups/{group}/topics/{topic}', [TopicController::class, 'show']);
       // Create a new topic inside a specific group
       Route::post('/groups/{group}/topics', [TopicController::class, 'store']);
       // --- UNIFIED MESSAGES ---
