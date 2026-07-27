@@ -232,7 +232,7 @@ public class WelcomeFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
+      SwingUtilities.invokeLater(() -> {
             new WelcomeFrame().setVisible(true);
         });
     }

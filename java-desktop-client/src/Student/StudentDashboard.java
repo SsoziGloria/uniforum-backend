@@ -1,8 +1,11 @@
 package Student;
 
+import GeneralUser.api.ApiClient;
 import GeneralUser.views.LoginForm;
 import Student.Groups.MainGroupsView;
+import Student.Groups.Discussions.TopicDetailView;
 import Student.Groups.BrowseGroupsView;
+import Student.Groups.GroupDetailsView;
 import Student.Groups.ChatView;
 import Student.Groups.CreateGroupView;
 import Student.Groups.JoinGroupView;
@@ -24,20 +27,16 @@ public class StudentDashboard extends JFrame {
     private String authToken;
     private MainGroupsView mainGroupsView;
     private BrowseGroupsView browseGroupsView;
-    private String currentUserName; // Stores the real username
+    private String currentUserName; 
     
-    // CardLayout container variables for switching views
     private JPanel contentCards;
     private CardLayout cardLayout;
     
-    // Sidebar Nav Item and Label References for Active Highlighting
     private JPanel dashboardNavItem, discussionsNavItem, groupsNavItem, quizzesNavItem, aiNavItem, notifNavItem, settingsNavItem;
     private JLabel dashboardTextLbl, discussionsTextLbl, groupsTextLbl, quizzesTextLbl, aiTextLbl, notifTextLbl, settingsTextLbl;
     
-    // Updated constructor accepting the username parameter
     public StudentDashboard(String token, String userNameInput, Runnable onCreateGroupClicked, Runnable onBrowseGroupsClicked) {
         this.authToken = token;
-        // Properly assign the passed username, falling back to "User" only if blank/null
         this.currentUserName = (userNameInput != null && !userNameInput.trim().isEmpty()) ? userNameInput.trim() : "User";
 
         setTitle("UniForum — Student Portal");
@@ -53,7 +52,6 @@ public class StudentDashboard extends JFrame {
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER_COLOR));
         sidebar.setPreferredSize(new Dimension(260, getHeight()));
 
-        // Logo Header Section
         JPanel logoPanel = new JPanel();
         logoPanel.setLayout(new BoxLayout(logoPanel, BoxLayout.Y_AXIS));
         logoPanel.setBackground(Color.WHITE);
@@ -74,7 +72,6 @@ public class StudentDashboard extends JFrame {
 
         sidebar.add(logoPanel);
 
-        // Navigation Menu Items
         JPanel navMenu = new JPanel();
         navMenu.setLayout(new BoxLayout(navMenu, BoxLayout.Y_AXIS));
         navMenu.setBackground(Color.WHITE);
@@ -88,7 +85,6 @@ public class StudentDashboard extends JFrame {
         menuHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
         navMenu.add(menuHeading);
 
-        // Wire sidebar items and keep direct label references
         dashboardNavItem = createSidebarNavItem("🏠", "Dashboard", true, "DASHBOARD");
         dashboardTextLbl = (JLabel) dashboardNavItem.getComponent(1);
         navMenu.add(dashboardNavItem);
@@ -131,11 +127,8 @@ public class StudentDashboard extends JFrame {
         navMenu.add(settingsNavItem);
 
         sidebar.add(navMenu);
-
-        // Push User Profile to the Bottom of the Sidebar
         sidebar.add(Box.createVerticalGlue());
 
-        // User Footer Panel (Uses dynamic currentUserName)
         JPanel userPanel = new JPanel(new BorderLayout(12, 0));
         userPanel.setBackground(Color.WHITE);
         userPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -155,7 +148,7 @@ public class StudentDashboard extends JFrame {
         userInfo.setLayout(new BoxLayout(userInfo, BoxLayout.Y_AXIS));
         userInfo.setBackground(Color.WHITE);
 
-        JLabel userNameLbl = new JLabel(currentUserName); // Dynamically set
+        JLabel userNameLbl = new JLabel(currentUserName); 
         userNameLbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         userNameLbl.setForeground(DARK_TEXT);
         userInfo.add(userNameLbl);
@@ -170,11 +163,10 @@ public class StudentDashboard extends JFrame {
 
         add(sidebar, BorderLayout.WEST);
 
-        // --- RIGHT CONTAINER (Top Navbar + Main Content) ---
+        // --- RIGHT CONTAINER ---
         JPanel rightContainer = new JPanel(new BorderLayout());
         rightContainer.setBackground(PAGE_BG);
 
-        // --- TOP NAVIGATION HEADER ---
         JPanel topHeader = new JPanel(new BorderLayout());
         topHeader.setBackground(Color.WHITE);
         topHeader.setBorder(BorderFactory.createCompoundBorder(
@@ -193,7 +185,6 @@ public class StudentDashboard extends JFrame {
 
         topHeader.add(headerTitlePanel, BorderLayout.WEST);
 
-        // Right Header Actions (Sign Out)
         JPanel rightHeaderActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         rightHeaderActions.setBackground(Color.WHITE);
 
@@ -212,12 +203,11 @@ public class StudentDashboard extends JFrame {
         topHeader.add(rightHeaderActions, BorderLayout.EAST);
         rightContainer.add(topHeader, BorderLayout.NORTH);
 
-        // --- CARD LAYOUT CONTAINER FOR DYNAMIC VIEWS ---
+        // --- CARD LAYOUT CONTAINER ---
         cardLayout = new CardLayout();
         contentCards = new JPanel(cardLayout);
         contentCards.setBackground(PAGE_BG);
 
-        // Add views to CardLayout Container with constructor callbacks
         contentCards.add(createDashboardHomePanel(), "DASHBOARD");
         
         mainGroupsView = new MainGroupsView(
@@ -240,72 +230,11 @@ public class StudentDashboard extends JFrame {
         browseGroupsView = new BrowseGroupsView(
             authToken,
             () -> cardLayout.show(contentCards, "GROUPS"),
-            (groupId) -> {
-                String joinCardName = "DYNAMIC_JOIN_VIEW_" + groupId;
-                JPanel joinView = new JoinGroupView(
-                    groupId,
-                    "Academic Group", 
-                    "Discussion Group #" + groupId,
-                    "Participate in academic discussions, share materials, and collaborate with peers.",
-                    authToken,
-                    () -> cardLayout.show(contentCards, "BROWSE_GROUPS"),
-                    () -> {
-                        String chatCardName = "CHAT_VIEW_" + groupId;
-                        JPanel chatView = new ChatView(
-                            groupId, 
-                            null,                           // topicId
-                            "Discussion Group #" + groupId, // groupName
-                            "Live Academic Discussion Stream",  // subTitle
-                            authToken,                          // authToken
-                            currentUserName,         // Real logged-in user's name string passed down!
-                            () -> cardLayout.show(contentCards, "GROUPS"), // onBackClicked
-                            () -> {                                 // onSwitchToTopics
-                                cardLayout.show(contentCards, "TOPIC_VIEW_" + groupId);
-                            }
-                        );
-                        
-                        contentCards.add(chatView, chatCardName);
-                        cardLayout.show(contentCards, chatCardName);
-                    }
-                );
-                
-                contentCards.add(joinView, joinCardName);
-                cardLayout.show(contentCards, joinCardName);
-            },
-            (groupId) -> {
-                String joinCardName = "DYNAMIC_JOIN_VIEW_" + groupId;
-                JPanel joinView = new JoinGroupView(
-                    groupId,
-                    "Academic Group", 
-                    "Discussion Group #" + groupId,
-                    "Participate in academic discussions, share materials, and collaborate with peers.",
-                    authToken,
-                    () -> cardLayout.show(contentCards, "BROWSE_GROUPS"),
-                    () -> {
-                        String chatCardName = "CHAT_VIEW_" + groupId;
-                        JPanel chatView = new ChatView(
-                            groupId, 
-                            null,
-                            "Discussion Group #" + groupId, 
-                            "Live Academic Stream",
-                            authToken, 
-                            currentUserName, // Real logged-in user's name string passed down!
-                            () -> cardLayout.show(contentCards, "GROUPS"),
-                            () -> {
-                                cardLayout.show(contentCards, "TOPIC_VIEW_" + groupId);
-                            }
-                        );
-                        contentCards.add(chatView, chatCardName);
-                        cardLayout.show(contentCards, chatCardName);
-                    }
-                );
-                contentCards.add(joinView, joinCardName);
-                cardLayout.show(contentCards, joinCardName);
-            }
+            groupId -> openBrowseGroupDetails(groupId),
+            groupId -> openBrowseGroupJoin(groupId)
         );
         contentCards.add(browseGroupsView, "BROWSE_GROUPS");
 
-        // Plug-and-Play Placeholders for Future Modules
         contentCards.add(createPlaceholderPanel("Discussions Module"), "DISCUSSIONS");
         contentCards.add(createPlaceholderPanel("Quizzes Module"), "QUIZZES");
         contentCards.add(createPlaceholderPanel("AI Recommendations Module"), "AI");
@@ -368,62 +297,55 @@ public class StudentDashboard extends JFrame {
 
         for (int i = 0; i < items.length; i++) {
             if (items[i] == null || textLabels[i] == null) continue;
-            
             boolean isActive = names[i].equals(cardName);
-
             items[i].setOpaque(true);
             items[i].setBackground(isActive ? PRIMARY_BLUE : Color.WHITE);
-
             JLabel iconLbl = (JLabel) items[i].getComponent(0);
             iconLbl.setForeground(isActive ? Color.WHITE : DARK_TEXT);
-
             textLabels[i].setFont(new Font("SansSerif", isActive ? Font.BOLD : Font.PLAIN, 13));
             textLabels[i].setForeground(isActive ? Color.WHITE : DARK_TEXT);
-
             items[i].revalidate();
             items[i].repaint();
         }
     }
 
-    // --- DASHBOARD HOME PANEL USING THE DYNAMIC USERNAME ---
     private JComponent createDashboardHomePanel() {
         JPanel outerContainer = new JPanel(new BorderLayout());
         outerContainer.setBackground(PAGE_BG);
-
+        
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(PAGE_BG);
         contentPanel.setBorder(new EmptyBorder(28, 32, 28, 32));
         contentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // 1. Welcome Banner
+        // --- WELCOME BANNER ---
         JPanel welcomeBanner = new JPanel();
         welcomeBanner.setLayout(new BoxLayout(welcomeBanner, BoxLayout.Y_AXIS));
         welcomeBanner.setBackground(PRIMARY_BLUE);
         welcomeBanner.setBorder(new EmptyBorder(28, 32, 28, 32));
-        welcomeBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        welcomeBanner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
         welcomeBanner.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel welcomeTitle = new JLabel("Welcome back, " + currentUserName + " 👋"); // Dynamically displayed
+        JLabel welcomeTitle = new JLabel("Welcome back, " + currentUserName + " 👋"); 
         welcomeTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
         welcomeTitle.setForeground(Color.WHITE);
         welcomeTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         welcomeBanner.add(welcomeTitle);
 
         welcomeBanner.add(Box.createRigidArea(new Dimension(0, 10)));
-
         JLabel welcomeDesc = new JLabel("<html><div style='width: 500px; color: #DBEAFE; font-size: 13px;'>Stay connected with your university discussions, discover recommended topics and improve your participation score.</div></html>");
         welcomeDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
         welcomeBanner.add(welcomeDesc);
-
+        
         welcomeBanner.add(Box.createRigidArea(new Dimension(0, 16)));
-
         JButton exploreBtn = new JButton("Explore Discussions");
         exploreBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
         exploreBtn.setForeground(PRIMARY_BLUE);
         exploreBtn.setBackground(Color.WHITE);
+        exploreBtn.setOpaque(true);
         exploreBtn.setFocusPainted(false);
-        exploreBtn.setBorder(new EmptyBorder(10, 18, 10, 18));
+        exploreBtn.setBorder(new EmptyBorder(10, 16, 10, 16));
         exploreBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         exploreBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         exploreBtn.addActionListener(e -> {
@@ -435,31 +357,31 @@ public class StudentDashboard extends JFrame {
         contentPanel.add(welcomeBanner);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 24)));
 
-        // 2. Statistics Cards Grid (4 columns)
-        JPanel statsGrid = new JPanel(new GridLayout(1, 4, 16, 0));
-        statsGrid.setBackground(PAGE_BG);
-        statsGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
-        statsGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // --- STATISTICS CARDS ROW ---
+        JPanel statsRow = new JPanel(new GridLayout(1, 4, 16, 0));
+        statsRow.setBackground(PAGE_BG);
+        statsRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        statsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        statsGrid.add(createStatCard("💬", "Questions Asked", "24"));
-        statsGrid.add(createStatCard("⭐", "Participation Score", "85%"));
-        statsGrid.add(createStatCard("📚", "Topics Following", "12"));
-        statsGrid.add(createStatCard("📝", "Pending Quizzes", "3"));
+        statsRow.add(createStatCard("💬", "Questions Asked", "24"));
+        statsRow.add(createStatCard("⭐", "Participation Score", "85%"));
+        statsRow.add(createStatCard("📚", "Topics Following", "12"));
+        statsRow.add(createStatCard("📝", "Pending Quizzes", "3"));
 
-        contentPanel.add(statsGrid);
+        contentPanel.add(statsRow);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 24)));
 
-        // 3. Main Content Split: Recommended Topics (2 cols) & Notifications (1 col)
-        JPanel mainGrid = new JPanel(new GridLayout(1, 2, 20, 0));
-        mainGrid.setBackground(PAGE_BG);
-        mainGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
+        // --- RECOMMENDATIONS & NOTIFICATIONS GRID ---
+        JPanel middleGrid = new JPanel(new GridLayout(1, 2, 24, 0));
+        middleGrid.setBackground(PAGE_BG);
+        middleGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
+        middleGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Recommended Topics Panel
-        JPanel recTopicsPanel = new JPanel();
-        recTopicsPanel.setLayout(new BoxLayout(recTopicsPanel, BoxLayout.Y_AXIS));
-        recTopicsPanel.setBackground(Color.WHITE);
-        recTopicsPanel.setBorder(BorderFactory.createCompoundBorder(
+        // Recommended Topics Card
+        JPanel recTopicsCard = new JPanel();
+        recTopicsCard.setLayout(new BoxLayout(recTopicsCard, BoxLayout.Y_AXIS));
+        recTopicsCard.setBackground(Color.WHITE);
+        recTopicsCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(20, 20, 20, 20)
         ));
@@ -474,80 +396,82 @@ public class StudentDashboard extends JFrame {
         aiBadge.setForeground(PRIMARY_BLUE);
         recHeader.add(recTitle, BorderLayout.WEST);
         recHeader.add(aiBadge, BorderLayout.EAST);
-        recHeader.setAlignmentX(Component.LEFT_ALIGNMENT);
-        recHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
-        recTopicsPanel.add(recHeader);
+        recTopicsCard.add(recHeader);
+        recTopicsCard.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        recTopicsPanel.add(Box.createRigidArea(new Dimension(0, 12)));
-        recTopicsPanel.add(createTopicRow("Laravel Authentication", "23 students discussing"));
-        recTopicsPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        recTopicsPanel.add(createTopicRow("Machine Learning Basics", "18 students discussing"));
-        recTopicsPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        recTopicsPanel.add(createTopicRow("Software Design Patterns", "31 students discussing"));
+        recTopicsCard.add(createTopicRow("Laravel Authentication", "23 students discussing"));
+        recTopicsCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        recTopicsCard.add(createTopicRow("Machine Learning Basics", "18 students discussing"));
+        recTopicsCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        recTopicsCard.add(createTopicRow("Software Design Patterns", "31 students discussing"));
 
-        mainGrid.add(recTopicsPanel);
+        middleGrid.add(recTopicsCard);
 
-        // Notifications Panel
-        JPanel notifPanel = new JPanel();
-        notifPanel.setLayout(new BoxLayout(notifPanel, BoxLayout.Y_AXIS));
-        notifPanel.setBackground(Color.WHITE);
-        notifPanel.setBorder(BorderFactory.createCompoundBorder(
+        // Notifications Card
+        JPanel notifCard = new JPanel();
+        notifCard.setLayout(new BoxLayout(notifCard, BoxLayout.Y_AXIS));
+        notifCard.setBackground(Color.WHITE);
+        notifCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(20, 20, 20, 20)
         ));
 
-        JLabel notifHeaderLbl = new JLabel("Notifications");
-        notifHeaderLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
-        notifHeaderLbl.setForeground(DARK_TEXT);
-        notifHeaderLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        notifPanel.add(notifHeaderLbl);
+        JLabel notifHeader = new JLabel("Notifications");
+        notifHeader.setFont(new Font("SansSerif", Font.BOLD, 16));
+        notifHeader.setForeground(DARK_TEXT);
+        notifCard.add(notifHeader);
+        notifCard.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        notifPanel.add(Box.createRigidArea(new Dimension(0, 14)));
-        notifPanel.add(createNotificationRow(PRIMARY_BLUE, "New quiz available", "Database Systems Quiz"));
-        notifPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        notifPanel.add(createNotificationRow(new Color(34, 197, 94), "Your question was answered", "Operating Systems"));
-        notifPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        notifPanel.add(createNotificationRow(new Color(234, 179, 8), "Participation reminder", "Engage more in discussions"));
+        notifCard.add(createNotificationItem(PRIMARY_BLUE, "New quiz available", "Database Systems Quiz"));
+        notifCard.add(Box.createRigidArea(new Dimension(0, 12)));
+        notifCard.add(createNotificationItem(new Color(34, 197, 94), "Your question was answered", "Operating Systems"));
+        notifCard.add(Box.createRigidArea(new Dimension(0, 12)));
+        notifCard.add(createNotificationItem(new Color(234, 179, 8), "Participation reminder", "Engage more in discussions"));
 
-        mainGrid.add(notifPanel);
-        contentPanel.add(mainGrid);
+        middleGrid.add(notifCard);
+        contentPanel.add(middleGrid);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 24)));
 
-        // 4. Recent Activity Panel
-        JPanel recentActivityPanel = new JPanel();
-        recentActivityPanel.setLayout(new BoxLayout(recentActivityPanel, BoxLayout.Y_AXIS));
-        recentActivityPanel.setBackground(Color.WHITE);
-        recentActivityPanel.setBorder(BorderFactory.createCompoundBorder(
+        // --- RECENT ACTIVITY CARD ---
+        JPanel recentActivityCard = new JPanel();
+        recentActivityCard.setLayout(new BoxLayout(recentActivityCard, BoxLayout.Y_AXIS));
+        recentActivityCard.setBackground(Color.WHITE);
+        recentActivityCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(20, 20, 20, 20)
         ));
-        recentActivityPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        recentActivityPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        recentActivityCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        recentActivityCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel recentTitle = new JLabel("Recent Activity");
-        recentTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
-        recentTitle.setForeground(DARK_TEXT);
-        recentTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        recentActivityPanel.add(recentTitle);
+        JLabel activityHeader = new JLabel("Recent Activity");
+        activityHeader.setFont(new Font("SansSerif", Font.BOLD, 16));
+        activityHeader.setForeground(DARK_TEXT);
+        recentActivityCard.add(activityHeader);
+        recentActivityCard.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        recentActivityPanel.add(Box.createRigidArea(new Dimension(0, 12)));
-        recentActivityPanel.add(createActivityRow("Answered \"How does Laravel middleware work?\"", "2 hrs ago"));
-        recentActivityPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        recentActivityPanel.add(createActivityRow("Joined Database Optimization topic", "Yesterday"));
-        recentActivityPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        recentActivityPanel.add(createActivityRow("Completed Software Engineering quiz", "3 days ago"));
+        recentActivityCard.add(createActivityRow("Answered \"How does Laravel middleware work?\"", "2 hrs ago"));
+        recentActivityCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        recentActivityCard.add(createActivityRow("Joined Database Optimization topic", "Yesterday"));
+        recentActivityCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        recentActivityCard.add(createActivityRow("Completed Software Engineering quiz", "3 days ago"));
 
-        contentPanel.add(recentActivityPanel);
+        contentPanel.add(recentActivityCard);
 
-        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        // --- HIDE HORIZONTAL SCROLLBAR & ENABLE TOUCH/WHEEL SCROLLING ---
+        JScrollPane scrollPane = new JScrollPane(
+            contentPanel,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setWheelScrollingEnabled(true);
+        
         outerContainer.add(scrollPane, BorderLayout.CENTER);
-
         return outerContainer;
     }
 
-    private JPanel createStatCard(String icon, String title, String value) {
+    private JPanel createStatCard(String icon, String label, String value) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
@@ -558,46 +482,41 @@ public class StudentDashboard extends JFrame {
 
         JLabel iconLbl = new JLabel(icon);
         iconLbl.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        iconLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(iconLbl);
-
         card.add(Box.createRigidArea(new Dimension(0, 6)));
 
-        JLabel titleLbl = new JLabel(title);
+        JLabel titleLbl = new JLabel(label);
         titleLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
         titleLbl.setForeground(MUTED_TEXT);
-        titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(titleLbl);
+        card.add(Box.createRigidArea(new Dimension(0, 4)));
 
         JLabel valLbl = new JLabel(value);
         valLbl.setFont(new Font("SansSerif", Font.BOLD, 22));
         valLbl.setForeground(DARK_TEXT);
-        valLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.add(valLbl);
 
         return card;
     }
 
-    private JPanel createTopicRow(String topicTitle, String subtitle) {
+    private JPanel createTopicRow(String title, String subtitle) {
         JPanel row = new JPanel(new BorderLayout());
         row.setBackground(new Color(248, 250, 252));
         row.setBorder(new EmptyBorder(10, 12, 10, 12));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel info = new JPanel();
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setBackground(new Color(248, 250, 252));
 
-        JLabel tLbl = new JLabel(topicTitle);
+        JLabel tLbl = new JLabel(title);
         tLbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         tLbl.setForeground(DARK_TEXT);
         info.add(tLbl);
 
-        JLabel sLbl = new JLabel(subtitle);
-        sLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        sLbl.setForeground(MUTED_TEXT);
-        info.add(sLbl);
+        JLabel subLbl = new JLabel(subtitle);
+        subLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        subLbl.setForeground(MUTED_TEXT);
+        info.add(subLbl);
 
         row.add(info, BorderLayout.WEST);
 
@@ -612,48 +531,38 @@ public class StudentDashboard extends JFrame {
         return row;
     }
 
-    private JPanel createNotificationRow(Color accentColor, String title, String subtitle) {
-        JPanel row = new JPanel();
-        row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
-        row.setBackground(Color.WHITE);
-        row.setBorder(BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor));
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+    private JPanel createNotificationItem(Color barColor, String title, String subtitle) {
+        JPanel item = new JPanel(new BorderLayout());
+        item.setBackground(Color.WHITE);
+        item.setBorder(BorderFactory.createMatteBorder(0, 4, 0, 0, barColor));
 
-        JPanel inner = new JPanel(new BorderLayout());
-        inner.setBackground(Color.WHITE);
-        inner.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-
-        JPanel textBlock = new JPanel();
-        textBlock.setLayout(new BoxLayout(textBlock, BoxLayout.Y_AXIS));
-        textBlock.setBackground(Color.WHITE);
+        JPanel textWrapper = new JPanel();
+        textWrapper.setLayout(new BoxLayout(textWrapper, BoxLayout.Y_AXIS));
+        textWrapper.setBackground(Color.WHITE);
+        textWrapper.setBorder(new EmptyBorder(0, 10, 0, 0));
 
         JLabel tLbl = new JLabel(title);
         tLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
         tLbl.setForeground(DARK_TEXT);
-        textBlock.add(tLbl);
+        textWrapper.add(tLbl);
 
-        JLabel sLbl = new JLabel(subtitle);
-        sLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        sLbl.setForeground(MUTED_TEXT);
-        textBlock.add(sLbl);
+        JLabel subLbl = new JLabel(subtitle);
+        subLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        subLbl.setForeground(MUTED_TEXT);
+        textWrapper.add(subLbl);
 
-        inner.add(textBlock, BorderLayout.CENTER);
-        row.add(inner);
-
-        return row;
+        item.add(textWrapper, BorderLayout.CENTER);
+        return item;
     }
 
     private JPanel createActivityRow(String action, String time) {
         JPanel row = new JPanel(new BorderLayout());
         row.setBackground(Color.WHITE);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 
-        JLabel actionLbl = new JLabel(action);
-        actionLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        actionLbl.setForeground(DARK_TEXT);
-        row.add(actionLbl, BorderLayout.WEST);
+        JLabel actLbl = new JLabel(action);
+        actLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        actLbl.setForeground(DARK_TEXT);
+        row.add(actLbl, BorderLayout.WEST);
 
         JLabel timeLbl = new JLabel(time);
         timeLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -672,4 +581,152 @@ public class StudentDashboard extends JFrame {
         panel.add(lbl);
         return panel;
     }
+
+    private boolean extractBoolean(String json, String key) {
+        String value = extractJsonValue(json, key);
+        return Boolean.parseBoolean(value);
+    }
+
+    private String extractJsonValue(String json, String key) {
+        try {
+            String searchKey = "\"" + key + "\":";
+            int index = json.indexOf(searchKey);
+            if (index == -1) return "";
+            
+            int startIndex = index + searchKey.length();
+            char firstChar = json.charAt(startIndex);
+            
+            if (firstChar == '"') {
+                int endIndex = json.indexOf('"', startIndex + 1);
+                return json.substring(startIndex + 1, endIndex);
+            } else {
+                int endIndex = startIndex;
+                while (endIndex < json.length() && 
+                       json.charAt(endIndex) != ',' && 
+                       json.charAt(endIndex) != '}') {
+                    endIndex++;
+                }
+                return json.substring(startIndex, endIndex).trim();
+            }
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void openBrowseGroupDetails(int groupId) {
+        new Thread(() -> {
+            String response = ApiClient.get("/groups/" + groupId, authToken);
+            boolean isAdmin = false;
+            boolean isMember = false;
+            String fetchedGroupName = "Discussion Group #" + groupId;
+            String fetchedDescription = "Participate in academic discussions, share materials, and collaborate with peers.";
+
+            try {
+                if (response != null && !response.isEmpty()) {
+                    String jsonBody = response;
+                    if (response.contains(":")) {
+                        int firstColon = response.indexOf(":");
+                        try {
+                            Integer.parseInt(response.substring(0, firstColon).trim());
+                            jsonBody = response.substring(firstColon + 1).trim();
+                        } catch (NumberFormatException ignored) {}
+                    }
+
+                    isAdmin = extractBoolean(jsonBody, "is_admin");
+                    isMember = !jsonBody.contains("\"user_role\":null") && jsonBody.contains("\"user_role\":");
+                    
+                    String name = extractJsonValue(jsonBody, "group_name");
+                    if (!name.isEmpty()) fetchedGroupName = name;
+
+                    String desc = extractJsonValue(jsonBody, "description");
+                    if (!desc.isEmpty() && !desc.equals("null")) fetchedDescription = desc;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            final boolean adminStatus = isAdmin;
+            final boolean memberStatus = isMember;
+            final String gName = fetchedGroupName;
+            final String gDesc = fetchedDescription;
+
+            SwingUtilities.invokeLater(() -> {
+                String detailsCardName = "GROUP_DETAILS_VIEW_" + groupId;
+                
+                GroupDetailsView detailsView = new GroupDetailsView(
+                    groupId, "Academic Group", gName, gDesc, memberStatus, adminStatus, authToken,
+                    () -> cardLayout.show(contentCards, "BROWSE_GROUPS"),
+                    () -> openBrowseGroupJoin(groupId),
+                    () -> openChatFromBrowse(groupId, gName, detailsCardName),
+                    () -> JOptionPane.showMessageDialog(this, "Opening Member Management controls for Group #" + groupId, "Admin Controls", JOptionPane.INFORMATION_MESSAGE),
+                    topicId -> openTopicDetailFromBrowse(groupId, topicId, detailsCardName)
+                );
+
+                contentCards.add(detailsView, detailsCardName);
+                cardLayout.show(contentCards, detailsCardName);
+                contentCards.revalidate();
+                contentCards.repaint();
+            });
+        }).start();
+    }
+
+    private void openBrowseGroupJoin(int groupId) {
+        String joinCardName = "DYNAMIC_JOIN_VIEW_" + groupId;
+        JoinGroupView joinView = new JoinGroupView(
+            groupId, "Academic Group", "Discussion Group #" + groupId,
+            "Participate in academic discussions, share materials, and collaborate with peers.",
+            authToken,
+            () -> cardLayout.show(contentCards, "BROWSE_GROUPS"),
+            () -> openChatFromBrowse(groupId, "Discussion Group #" + groupId, joinCardName)
+        );
+        contentCards.add(joinView, joinCardName);
+        cardLayout.show(contentCards, joinCardName);
+    }
+
+    private void openChatFromBrowse(int groupId, String gName, String backCardName) {
+        String chatCardName = "CHAT_VIEW_" + groupId;
+        ChatView chatView = new ChatView(
+            groupId, null, gName, "Live Academic Discussion Stream", authToken, currentUserName,
+            () -> cardLayout.show(contentCards, backCardName),
+            selectedTopicId -> openTopicDetailFromBrowse(groupId, selectedTopicId, chatCardName)
+        );
+        contentCards.add(chatView, chatCardName);
+        cardLayout.show(contentCards, chatCardName);
+    }
+
+    private void openTopicDetailFromBrowse(int groupId, int topicId, String backCardName) {
+        String topicCardName = "TOPIC_DETAIL_VIEW_" + groupId + "_" + topicId;
+        TopicDetailView topicDetailView = new TopicDetailView(
+            groupId, topicId, authToken,
+            () -> cardLayout.show(contentCards, backCardName)
+        );
+        contentCards.add(topicDetailView, topicCardName);
+        cardLayout.show(contentCards, topicCardName);
+        contentCards.revalidate();
+        contentCards.repaint();
+    }
+    private void openChatFromMain(int groupId, String gName) {
+    String chatCardName = "MAIN_CHAT_VIEW_" + groupId;
+    String detailsCardName = "GROUP_DETAILS_" + groupId;
+    
+    ChatView chatView = new ChatView(
+        groupId, null, gName, "Live Academic Discussion Stream", authToken, currentUserName,
+        () -> cardLayout.show(contentCards, detailsCardName), // Back button returns to group details
+        selectedTopicId -> openTopicDetailFromMain(groupId, selectedTopicId, chatCardName)
+    );
+    contentCards.add(chatView, chatCardName);
+    cardLayout.show(contentCards, chatCardName);
+}
+
+private void openTopicDetailFromMain(int groupId, int topicId, String backCardName) {
+    String topicCardName = "MAIN_TOPIC_DETAIL_VIEW_" + groupId + "_" + topicId;
+    TopicDetailView topicDetailView = new TopicDetailView(
+        groupId, topicId, authToken,
+        () -> cardLayout.show(contentCards, backCardName)
+    );
+    contentCards.add(topicDetailView, topicCardName);
+    cardLayout.show(contentCards, topicCardName);
+    contentCards.revalidate();
+    contentCards.repaint();
+}
 }

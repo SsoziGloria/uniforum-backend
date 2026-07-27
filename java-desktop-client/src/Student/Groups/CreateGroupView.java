@@ -32,6 +32,8 @@ public class CreateGroupView extends JPanel {
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBackground(PAGE_BG);
+        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        headerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         JButton backBtn = new JButton("← Back to Groups");
         backBtn.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -70,7 +72,7 @@ public class CreateGroupView extends JPanel {
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(24, 24, 24, 24)
         ));
-        formPanel.setMaximumSize(new Dimension(600, 400));
+        formPanel.setMaximumSize(new Dimension(600, 360));
         formPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Group Name Input
@@ -84,6 +86,7 @@ public class CreateGroupView extends JPanel {
         groupNameField = new JTextField();
         groupNameField.setFont(new Font("SansSerif", Font.PLAIN, 13));
         groupNameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        groupNameField.setAlignmentX(Component.LEFT_ALIGNMENT);
         groupNameField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
             new EmptyBorder(6, 10, 6, 10)
@@ -104,7 +107,11 @@ public class CreateGroupView extends JPanel {
         descriptionArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
-        JScrollPane descScroll = new JScrollPane(descriptionArea);
+        JScrollPane descScroll = new JScrollPane(
+            descriptionArea,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         descScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
         descScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
         descScroll.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
@@ -127,13 +134,20 @@ public class CreateGroupView extends JPanel {
         formPanel.add(submitBtn);
 
         // Center Wrapper to avoid full-width expansion
-        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 20));
+        JPanel centerWrapper = new JPanel();
+        centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
         centerWrapper.setBackground(PAGE_BG);
+        centerWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
         centerWrapper.add(formPanel);
 
-        JScrollPane mainScroll = new JScrollPane(centerWrapper);
+        JScrollPane mainScroll = new JScrollPane(
+            centerWrapper,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         mainScroll.setBorder(null);
         mainScroll.getVerticalScrollBar().setUnitIncrement(16);
+        mainScroll.setWheelScrollingEnabled(true);
         add(mainScroll, BorderLayout.CENTER);
     }
 

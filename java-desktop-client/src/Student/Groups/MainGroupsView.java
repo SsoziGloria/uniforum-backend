@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import GeneralUser.api.ApiClient;
+import Student.Groups.Discussions.GroupTopicsView;
+import Student.Groups.Discussions.TopicDetailView;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -279,82 +281,206 @@ public class MainGroupsView extends JPanel {
     }
 
    private JPanel createWebUIGroupCard(int groupId, String groupName, String description) {
-    JPanel card = new JPanel(new BorderLayout());
-    card.setBackground(Color.WHITE);
-    card.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(BORDER_COLOR, 1),
-        new EmptyBorder(20, 20, 20, 20))
-    );
-    card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
-    card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            new EmptyBorder(20, 20, 20, 20))
+        );
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    JPanel leftContent = new JPanel();
-    leftContent.setLayout(new BoxLayout(leftContent, BoxLayout.Y_AXIS));
-    leftContent.setBackground(Color.WHITE);
-    leftContent.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JPanel leftContent = new JPanel();
+        leftContent.setLayout(new BoxLayout(leftContent, BoxLayout.Y_AXIS));
+        leftContent.setBackground(Color.WHITE);
+        leftContent.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    JLabel nameLbl = new JLabel(groupName);
-    nameLbl.setFont(new Font("SansSerif", Font.BOLD, 15));
-    nameLbl.setForeground(DARK_TEXT);
-    leftContent.add(nameLbl);
+        JLabel nameLbl = new JLabel(groupName);
+        nameLbl.setFont(new Font("SansSerif", Font.BOLD, 15));
+        nameLbl.setForeground(DARK_TEXT);
+        leftContent.add(nameLbl);
 
-    leftContent.add(Box.createRigidArea(new Dimension(0, 5)));
+        leftContent.add(Box.createRigidArea(new Dimension(0, 5)));
 
-    JLabel descLbl = new JLabel(description);
-    descLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    descLbl.setForeground(MUTED_TEXT);
-    leftContent.add(descLbl);
+        JLabel descLbl = new JLabel(description);
+        descLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        descLbl.setForeground(MUTED_TEXT);
+        leftContent.add(descLbl);
 
-    card.add(leftContent, BorderLayout.CENTER);
+        card.add(leftContent, BorderLayout.CENTER);
 
-    // Add click event listener to route user directly to ChatView for this group
-    card.addMouseListener(new java.awt.event.MouseAdapter() {
-        @Override
-        public void mouseClicked(java.awt.event.MouseEvent e) {
-            openChatView(groupId, groupName);
-        }
-    });
-    
-    // Ensure inner text components also pass clicks through to the card
-    for (Component comp : leftContent.getComponents()) {
-        comp.addMouseListener(new java.awt.event.MouseAdapter() {
+        // --- UPDATED CLICK LISTENER TO LOAD GROUP DETAILS INSTEAD OF DIRECT CHAT ---
+        java.awt.event.MouseAdapter clickAdapter = new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                openChatView(groupId, groupName);
+                fetchAndOpenGroupDetails(groupId);
             }
-        });
-    }
+        };
 
-    return card;
-   }
-
-
-private void openChatView(int groupId, String groupName) {
-    // Navigate to ChatView inside your parent container/CardLayout
-    Container parent = this.getParent();
-    if (parent != null && parent.getLayout() instanceof CardLayout) {
-        CardLayout cl = (CardLayout) parent.getLayout();
+        card.addMouseListener(clickAdapter);
         
-        // Create or show ChatView dynamically
-       JPanel chatView = new ChatView(
-    groupId, 
-    null,                          // topicId (null for general chat stream)
-    groupName,                     // group name string
-    "Live Academic Discussion Stream", // subTitle string
-    authToken,                     // auth token string
-    currentUserName,           // logged-in user's name string
-    () -> {                        // onBackClicked callback
-        cl.show(parent, "GROUPS");
-    }, 
-    () -> {                        // onSwitchToTopics callback
-        // Action to trigger when clicking "Topic Discussions"
-        // e.g., switch to your topics view or open a topic selection dialog
-        cl.show(parent, "TOPICS_VIEW_" + groupId);
+        // Ensure inner text components also pass clicks through to the card
+        for (Component comp : leftContent.getComponents()) {
+            comp.addMouseListener(clickAdapter);
+        }
+
+        return card;
+    }
+    
+   // --- FETCH GROUP DETAILS AND EXTRACT "is_admin" & "is_member" FLAGS ---
+   // --- FETCH GROUP DETAILS AND EXTRACT "is_admin" & "is_member" FLAGS ---
+    private void fetchAndOpenGroupDetails(int groupId) {
+        new Thread(() -> {
+            String response = ApiClient.get("/groups/" + groupId, authToken);
+            boolean isAdmin = false;
+            boolean isMember = false; 
+            String fetchedGroupName = "";
+            String fetchedDescription = "";
+
+            try {
+                if (response != null && !response.isEmpty()) {
+                    String jsonBody = response;
+                    if (response.contains(":")) {
+                        int firstColon = response.indexOf(":");
+                        try {
+                            Integer.parseInt(response.substring(0, firstColon).trim());
+                            jsonBody = response.substring(firstColon + 1).trim();
+                        } catch (NumberFormatException ignored) {}
+                    }
+
+                    isAdmin = extractBoolean(jsonBody, "is_admin");
+                    isMember = extractBoolean(jsonBody, "is_member");
+
+                    if (!isMember) {
+                        String userRole = extractJsonValue(jsonBody, "user_role");
+                        if (userRole != null && !userRole.isEmpty() && !userRole.equalsIgnoreCase("null")) {
+                            isMember = true;
+                        }
+                    }
+
+                    fetchedGroupName = extractJsonValue(jsonBody, "group_name");
+                    if (fetchedGroupName.isEmpty()) fetchedGroupName = extractJsonValue(jsonBody, "name");
+                    
+                    fetchedDescription = extractJsonValue(jsonBody, "description");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            final boolean adminStatus = isAdmin;
+            final boolean memberStatus = isMember; 
+            final String gName = fetchedGroupName.isEmpty() ? "Group Details" : fetchedGroupName;
+            final String gDesc = fetchedDescription.isEmpty() ? "No description provided." : fetchedDescription;
+
+            SwingUtilities.invokeLater(() -> {
+                Container parent = this.getParent();
+                if (parent != null && parent.getLayout() instanceof CardLayout) {
+                    CardLayout cl = (CardLayout) parent.getLayout();
+
+                   GroupDetailsView detailsView = new GroupDetailsView(
+    groupId,
+    "Academic Group",
+    gName,
+    gDesc,
+    memberStatus, 
+    adminStatus,  
+    authToken,
+    () -> cl.show(parent, "GROUPS"), 
+    () -> { /* Handle join action if needed */ },
+    () -> { 
+        // Open Chat View and register it properly
+        openChatView(groupId, gName); 
+    },
+    () -> { /* View members action */ },
+    topicId -> {  
+        // When topic button is clicked, open Topic Detail View directly
+        String detailCardName = "TOPIC_DETAIL_VIEW_" + groupId + "_" + topicId;
+        TopicDetailView detailView = new TopicDetailView(
+            groupId,
+            topicId,
+            authToken,
+            () -> cl.show(parent, "GROUP_DETAILS_" + groupId)
+        );
+
+        parent.add(detailView, detailCardName);
+        cl.show(parent, detailCardName);
+        parent.revalidate();
+        parent.repaint();
     }
 );
 
-parent.add(chatView, "CHAT_VIEW_" + groupId);
-cl.show(parent, "CHAT_VIEW_" + groupId);
+String detailCardName = "GROUP_DETAILS_" + groupId;
+parent.add(detailsView, detailCardName);
+cl.show(parent, detailCardName);
+                }
+            });
+        }).start();
+    }
+   private void openChatView(int groupId, String groupName) {
+    Container parent = this.getParent();
+    if (parent != null && parent.getLayout() instanceof CardLayout) {
+        CardLayout cl = (CardLayout) parent.getLayout();
+        String detailsCardName = "GROUP_DETAILS_" + groupId;
+        
+        ChatView chatView = new ChatView(
+            groupId, 
+            null,                                  
+            groupName,                             
+            "Live Academic Discussion Stream", 
+            authToken,                             
+            currentUserName,                   
+            () -> cl.show(parent, detailsCardName), // FIXED: Returns to Group Details instead of main list
+            selectedTopicId -> {                  
+                String detailCardName = "TOPIC_DETAIL_VIEW_" + groupId + "_" + selectedTopicId;
+                TopicDetailView detailView = new TopicDetailView(
+                    groupId,
+                    selectedTopicId,
+                    authToken,
+                    () -> cl.show(parent, "CHAT_VIEW_" + groupId)
+                );
+                parent.add(detailView, detailCardName);
+                cl.show(parent, detailCardName);
+                parent.revalidate();
+                parent.repaint();
+            }
+        );
+
+        parent.add(chatView, "CHAT_VIEW_" + groupId);
+        cl.show(parent, "CHAT_VIEW_" + groupId);
     }
 }
+
+   private boolean extractBoolean(String json, String key) {
+        try {
+            // If the JSON contains a "data" wrapper object, make sure we look inside it
+            int dataIdx = json.indexOf("\"data\":");
+            String targetJson = json;
+            if (dataIdx != -1) {
+                int braceIdx = json.indexOf("{", dataIdx);
+                if (braceIdx != -1) {
+                    targetJson = json.substring(braceIdx);
+                }
+            }
+
+            String searchKey = "\"" + key + "\":";
+            int start = targetJson.indexOf(searchKey);
+            if (start == -1) return false; // Default strictly to false if key is missing!
+            
+            start += searchKey.length();
+            int end = start;
+            while (end < targetJson.length() && targetJson.charAt(end) != ',' && targetJson.charAt(end) != '}') {
+                end++;
+            }
+            
+            String rawVal = targetJson.substring(start, end).trim();
+            rawVal = rawVal.replace("\"", "").replace("'", "").toLowerCase();
+            
+            if (rawVal.equals("true") || rawVal.equals("1")) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

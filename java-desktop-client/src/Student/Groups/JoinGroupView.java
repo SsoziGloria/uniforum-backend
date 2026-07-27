@@ -21,6 +21,7 @@ public class JoinGroupView extends JPanel {
         JPanel contentContainer = new JPanel();
         contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
         contentContainer.setBackground(PAGE_BG);
+        contentContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton backBtn = new JButton("← Back to Browse Groups");
         backBtn.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -59,7 +60,7 @@ public class JoinGroupView extends JPanel {
             new EmptyBorder(30, 30, 30, 30)
         ));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.setMaximumSize(new Dimension(850, Integer.MAX_VALUE));
+        card.setMaximumSize(new Dimension(850, 580));
 
         JLabel badge = new JLabel(groupTag);
         badge.setFont(new Font("SansSerif", Font.BOLD, 11));
@@ -104,7 +105,7 @@ public class JoinGroupView extends JPanel {
             new EmptyBorder(16, 20, 16, 20)
         ));
         rulesBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        rulesBox.setMaximumSize(new Dimension(780, Integer.MAX_VALUE));
+        rulesBox.setMaximumSize(new Dimension(780, 160));
 
         String[] rules = {
             "Respect all members of the discussion group.",
@@ -161,37 +162,34 @@ public class JoinGroupView extends JPanel {
         joinBtn.setFocusPainted(false);
         joinBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Inside JoinGroupView.java - joinBtn action listener update:
-joinBtn.addActionListener(e -> {
-    if (!agreeCheckbox.isSelected()) {
-        JOptionPane.showMessageDialog(
-            this, 
-            "You must agree to follow the rules before joining this group.", 
-            "Agreement Required", 
-            JOptionPane.WARNING_MESSAGE
-        );
-    } else {
-        // Send rules_accepted parameter as required by Laravel backend validation
-        String requestBody = "{\"rules_accepted\": true}";
-        String response = ApiClient.post("/groups/" + groupId + "/join", requestBody, authToken);
+        joinBtn.addActionListener(e -> {
+            if (!agreeCheckbox.isSelected()) {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "You must agree to follow the rules before joining this group.", 
+                    "Agreement Required", 
+                    JOptionPane.WARNING_MESSAGE
+                );
+            } else {
+                String requestBody = "{\"rules_accepted\": true}";
+                String response = ApiClient.post("/groups/" + groupId + "/join", requestBody, authToken);
 
-        if (response.startsWith("200") || response.startsWith("201")) {
-            JOptionPane.showMessageDialog(this, "Successfully joined group!");
-            
-            // Trigger transition to ChatView dynamically or call success callback
-            if (onSuccessfullyJoined != null) {
-                onSuccessfullyJoined.run();
+                if (response != null && (response.startsWith("200") || response.startsWith("201") || response.contains("success"))) {
+                    JOptionPane.showMessageDialog(this, "Successfully joined group!");
+                    
+                    if (onSuccessfullyJoined != null) {
+                        onSuccessfullyJoined.run();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(
+                        this, 
+                        "Failed to join group. Server response: " + response, 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
             }
-        } else {
-            JOptionPane.showMessageDialog(
-                this, 
-                "Failed to join group. Server response: " + response, 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-});
+        });
 
         btnRow.add(cancelBtn);
         btnRow.add(joinBtn);
@@ -199,9 +197,14 @@ joinBtn.addActionListener(e -> {
 
         contentContainer.add(card);
 
-        JScrollPane scrollPane = new JScrollPane(contentContainer);
+        JScrollPane scrollPane = new JScrollPane(
+            contentContainer,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setWheelScrollingEnabled(true);
         add(scrollPane, BorderLayout.CENTER);
     }
 }

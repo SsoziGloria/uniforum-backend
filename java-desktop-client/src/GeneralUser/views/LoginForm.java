@@ -11,6 +11,7 @@ public class LoginForm extends JFrame {
     private JPasswordField passwordField;
     private JButton loginButton;
     private JLabel errorLabel;
+     private boolean isLoggingIn = false; 
 
     public LoginForm() {
         setTitle("UniForum — Sign In");
@@ -98,7 +99,10 @@ public class LoginForm extends JFrame {
         loginButton.addActionListener(e -> handleLogin());
     }
 
+
+
     private void handleLogin() {
+        
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
         
@@ -107,66 +111,82 @@ public class LoginForm extends JFrame {
             return;
         }
 
+        // Prevent double execution clicks on the Sign In button
+        if (isLoggingIn) return;
+        isLoggingIn = true;
+
         new Thread(() -> {
-            // 1. Build JSON payload
-            String jsonPayload = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\"}",
-                email, password
-            );
+            try {
+                // 1. Build JSON payload
+                String jsonPayload = String.format(
+                    "{\"email\": \"%s\", \"password\": \"%s\"}",
+                    email, password
+                );
 
-            // 2. Call the modular ApiClient post method
-            String rawResponse = GeneralUser.api.ApiClient.post("/login", jsonPayload);
+                // 2. Call the modular ApiClient post method
+                String rawResponse = GeneralUser.api.ApiClient.post("/login", jsonPayload);
 
-            // 3. Parse response code and body
-            int splitIndex = rawResponse.indexOf(":");
-            int responseCode = Integer.parseInt(rawResponse.substring(0, splitIndex));
-            String responseStr = rawResponse.substring(splitIndex + 1);
-
-            // 4. Handle success or error routing
-            if (responseCode >= 200 && responseCode < 300 && responseStr.contains("token")) {
-                // Extract Auth Token
-                int tokenIndex = responseStr.indexOf("token");
-                String authToken = responseStr.substring(tokenIndex + 8).replaceAll("[\"}]", "").split(",")[0].trim();
-
-                // Extract Username safely using response string parsing (matching your token extraction style)
-                String extractedUsername = "User";
-                try {
-                    if (responseStr.contains("name")) {
-    int userIndex = responseStr.indexOf("name");
-    // Find the colon after 'name'
-    int colonIndex = responseStr.indexOf(":", userIndex);
-    // Find the opening quote of the value
-    int startQuote = responseStr.indexOf("\"", colonIndex);
-    // Find the closing quote of the value
-    int endQuote = responseStr.indexOf("\"", startQuote + 1);
-    
-    if (startQuote != -1 && endQuote != -1) {
-        extractedUsername = responseStr.substring(startQuote + 1, endQuote).trim();
-    }
+                // 3. Parse response code and body
+               // Correctly split only on the first colon separating status code and body
+int splitIndex = rawResponse.indexOf(":");
+if (splitIndex == -1) {
+    throw new RuntimeException("Invalid response format from server.");
 }
-                } catch (Exception ex) {
-                    extractedUsername = "User";
-                }
+int responseCode = Integer.parseInt(rawResponse.substring(0, splitIndex).trim());
+String responseStr = rawResponse.substring(splitIndex + 1).trim();
 
-                final String finalUsername = extractedUsername;
+                // 4. Handle success or error routing
+                if (responseCode >= 200 && responseCode < 300 && responseStr.contains("token")) {
+                    // Extract Auth Token
+                    int tokenIndex = responseStr.indexOf("token");
+                    String authToken = responseStr.substring(tokenIndex + 8).replaceAll("[\"}]", "").split(",")[0].trim();
 
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, "Authentication successful!");
-                    if (responseStr.contains("\"role\":\"lecturer\"")) {
-                        new LecturerDashboard(authToken).setVisible(true);
-                    } else {
-                        new StudentDashboard(
-                            authToken, 
-                            finalUsername, 
-                            () -> {}, 
-                            () -> {}
-                        ).setVisible(true);
+                    // Extract Username safely
+                    String extractedUsername = "User";
+                    try {
+                        if (responseStr.contains("name")) {
+                            int userIndex = responseStr.indexOf("name");
+                            int colonIndex = responseStr.indexOf(":", userIndex);
+                            int startQuote = responseStr.indexOf("\"", colonIndex);
+                            int endQuote = responseStr.indexOf("\"", startQuote + 1);
+                            
+                            if (startQuote != -1 && endQuote != -1) {
+                                extractedUsername = responseStr.substring(startQuote + 1, endQuote).trim();
+                            }
+                        }
+                    } catch (Exception ex) {
+                        extractedUsername = "User";
                     }
-                    dispose(); // Close login window
-                });
-            } else {
+
+                    final String finalUsername = extractedUsername;
+
+                    SwingUtilities.invokeLater(() -> {
+                        // Dispose immediately to destroy the login frame and stop duplicate event processing
+                        dispose(); 
+
+                        JOptionPane.showMessageDialog(null, "Authentication successful!");
+                        
+                        if (responseStr.contains("\"role\":\"lecturer\"")) {
+                            new LecturerDashboard(authToken).setVisible(true);
+                        } else {
+                            new StudentDashboard(
+                                authToken, 
+                                finalUsername, 
+                                () -> {}, 
+                                () -> {}
+                            ).setVisible(true);
+                        }
+                    });
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        isLoggingIn = false; // Reset lock on failure so they can retry
+                        errorLabel.setText("Login failed: Invalid credentials.");
+                    });
+                }
+            } catch (Exception ex) {
                 SwingUtilities.invokeLater(() -> {
-                    errorLabel.setText("Login failed: Invalid credentials.");
+                    isLoggingIn = false; // Reset lock on error
+                    errorLabel.setText("Login error: " + ex.getMessage());
                 });
             }
         }).start();

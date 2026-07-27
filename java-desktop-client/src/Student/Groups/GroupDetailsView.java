@@ -1,9 +1,12 @@
 package Student.Groups;
 
 import GeneralUser.api.ApiClient;
+import Student.Groups.Discussions.NewDiscussionView;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class GroupDetailsView extends JPanel {
 
@@ -17,7 +20,18 @@ public class GroupDetailsView extends JPanel {
     private int groupId;
     private JPanel contentContainer;
 
-    public GroupDetailsView(int groupId, String groupTag, String groupName, String groupDescription, String authToken, Runnable onBackClicked, Runnable onJoinClicked, Runnable onOpenChatClicked, Runnable onViewMembersClicked) {
+    public GroupDetailsView(int groupId, 
+                        String groupTag, 
+                        String groupName, 
+                        String groupDescription, 
+                        boolean isMember,   
+                        boolean isAdmin, 
+                        String authToken, 
+                        Runnable onBackClicked, 
+                        Runnable onJoinClicked, 
+                        Runnable onOpenChatClicked, 
+                        Runnable onViewMembersClicked, 
+                        Consumer<Integer> onTopicSelected) {
         this.groupId = groupId;
         this.authToken = authToken;
 
@@ -70,32 +84,51 @@ public class GroupDetailsView extends JPanel {
         bodyContainer.setLayout(new BorderLayout(24, 0));
         bodyContainer.setBackground(PAGE_BG);
         bodyContainer.setBorder(new EmptyBorder(24, 40, 24, 40));
+        bodyContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+        bodyContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 500));
 
-        // Left Column (Quick Actions & Discussions)
+        // Left Column (Quick Actions & Discussion Previews)
         JPanel leftCol = new JPanel();
         leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
         leftCol.setBackground(PAGE_BG);
+        leftCol.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Quick Actions Card
         JPanel actionsCard = createCardPanel("Quick Actions");
-        JPanel btnGrid = new JPanel(new GridLayout(1, 3, 12, 0));
+        
+        int columnsCount = isMember ? 2 : 3;
+        JPanel btnGrid = new JPanel(new GridLayout(1, columnsCount, 12, 0));
         btnGrid.setBackground(Color.WHITE);
         btnGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
         JButton newDiscBtn = createStyledButton("New Discussion", PRIMARY_BLUE, Color.WHITE);
-        JButton joinGroupBtn = createStyledButton("Join Group", PRIMARY_BLUE, Color.WHITE);
         JButton chatBtn = createStyledButton("Group Chat", PRIMARY_BLUE, Color.WHITE);
 
-        joinGroupBtn.addActionListener(e -> {
-            if (onJoinClicked != null) onJoinClicked.run();
+        newDiscBtn.addActionListener(e -> {
+            if (!isMember) {
+                JOptionPane.showMessageDialog(this, "You must join this group before posting new discussions.", "Membership Required", JOptionPane.WARNING_MESSAGE);
+            } else {
+                // Handle new discussion logic here
+            NewDiscussionView createView = new NewDiscussionView(groupId, authToken);
+            createView.setVisible(true);
+            }
         });
+
         chatBtn.addActionListener(e -> {
             if (onOpenChatClicked != null) onOpenChatClicked.run();
         });
 
         btnGrid.add(newDiscBtn);
-        btnGrid.add(joinGroupBtn);
+
+        if (!isMember) {
+            JButton joinGroupBtn = createStyledButton("Join Group", PRIMARY_BLUE, Color.WHITE);
+            joinGroupBtn.addActionListener(e -> {
+                if (onJoinClicked != null) onJoinClicked.run();
+            });
+            btnGrid.add(joinGroupBtn);
+        }
+
         btnGrid.add(chatBtn);
         actionsCard.add(btnGrid);
         leftCol.add(actionsCard);
@@ -103,16 +136,27 @@ public class GroupDetailsView extends JPanel {
         leftCol.add(Box.createRigidArea(new Dimension(0, 20)));
 
         // Recent Discussions Card
-        JPanel discussionsCard = createCardPanel("Recent Discussions");
-        discussionsCard.add(createDiscussionRow("Laravel Authentication Problem", "18 replies • Last updated 20 mins ago"));
-        discussionsCard.add(Box.createRigidArea(new Dimension(0, 12)));
-        discussionsCard.add(createDiscussionRow("Software Engineering Assignment Discussion", "27 replies • Yesterday"));
+        JPanel discussionsCard = createCardPanel(isMember ? "Topic Discussions" : "Topic Discussions (Read-Only Preview)");
+        
+        if (!isMember) {
+            JLabel hintLbl = new JLabel("<html><div style='color: #64748B; font-size: 11px; margin-bottom: 8px;'>Non-members can view topic discussions to evaluate group activity before joining.</div></html>");
+            hintLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+            discussionsCard.add(hintLbl);
+            discussionsCard.add(Box.createRigidArea(new Dimension(0, 8)));
+        }
+
+        discussionsCard.add(createClickableDiscussionRow(101, "Laravel Authentication Problem", "18 replies • Last updated 20 mins ago", onTopicSelected));
+        discussionsCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        discussionsCard.add(createClickableDiscussionRow(102, "Software Engineering Assignment Discussion", "27 replies • Yesterday", onTopicSelected));
+        
         leftCol.add(discussionsCard);
 
         // Right Column (Sidebar Information & Admin Controls)
         JPanel rightCol = new JPanel();
         rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
         rightCol.setBackground(PAGE_BG);
+        rightCol.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rightCol.setPreferredSize(new Dimension(320, 0));
 
         // Group Information Card
         JPanel infoCard = createCardPanel("Group Information");
@@ -123,37 +167,43 @@ public class GroupDetailsView extends JPanel {
         infoCard.add(createInfoRow("Lecturer", "Dr. Karungi Shamim"));
         rightCol.add(infoCard);
 
-        rightCol.add(Box.createRigidArea(new Dimension(0, 20)));
+        if (isAdmin) {
+            rightCol.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Admin Controls Card
-        JPanel adminCard = createCardPanel("Admin Controls");
-        JButton manageMembersBtn = createActionRowButton("Manage Members");
-        manageMembersBtn.addActionListener(e -> {
-            if (onViewMembersClicked != null) onViewMembersClicked.run();
-        });
-        adminCard.add(manageMembersBtn);
-        adminCard.add(Box.createRigidArea(new Dimension(0, 8)));
-        adminCard.add(createActionRowButton("View Statistics"));
-        rightCol.add(adminCard);
+            JPanel adminCard = createCardPanel("Admin Controls");
+            JButton manageMembersBtn = createActionRowButton("Manage Members");
+            manageMembersBtn.addActionListener(e -> {
+                if (onViewMembersClicked != null) onViewMembersClicked.run();
+            });
+            adminCard.add(manageMembersBtn);
+            adminCard.add(Box.createRigidArea(new Dimension(0, 8)));
+            
+            JButton viewStatsBtn = createActionRowButton("View Statistics");
+            viewStatsBtn.addActionListener(e -> {
+                JOptionPane.showMessageDialog(this, "Loading analytics and metrics for Group #" + groupId, "Group Statistics", JOptionPane.INFORMATION_MESSAGE);
+            });
+            adminCard.add(viewStatsBtn);
+            rightCol.add(adminCard);
+        }
 
-        // Add columns to body layout grid or split
-        JPanel gridWrapper = new JPanel(new GridLayout(1, 2, 24, 0));
-        gridWrapper.setBackground(PAGE_BG);
-        gridWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
-        // Let's use a BorderLayout for main contents to mirror the 2/3 and 1/3 ratio cleanly
+        // Split Layout Container
         JPanel splitLayout = new JPanel(new BorderLayout(24, 0));
         splitLayout.setBackground(PAGE_BG);
         splitLayout.add(leftCol, BorderLayout.CENTER);
         splitLayout.add(rightCol, BorderLayout.EAST);
-        rightCol.setPreferredSize(new Dimension(320, 0));
 
         bodyContainer.add(splitLayout, BorderLayout.CENTER);
         contentContainer.add(bodyContainer);
 
-        JScrollPane scrollPane = new JScrollPane(contentContainer);
+        JScrollPane scrollPane = new JScrollPane(
+            contentContainer,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setWheelScrollingEnabled(true);
+        
         add(scrollPane, BorderLayout.CENTER);
     }
 
@@ -166,6 +216,7 @@ public class GroupDetailsView extends JPanel {
             new EmptyBorder(20, 20, 20, 20)
         ));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
 
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -188,7 +239,7 @@ public class GroupDetailsView extends JPanel {
         return btn;
     }
 
-    private JPanel createDiscussionRow(String title, String meta) {
+    private JPanel createClickableDiscussionRow(int topicId, String title, String meta, Consumer<Integer> onTopicSelected) {
         JPanel row = new JPanel();
         row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
         row.setBackground(new Color(250, 250, 250));
@@ -198,10 +249,11 @@ public class GroupDetailsView extends JPanel {
         ));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
+        row.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(new Font("SansSerif", Font.BOLD, 13));
-        titleLbl.setForeground(DARK_TEXT);
+        titleLbl.setForeground(PRIMARY_BLUE);
         row.add(titleLbl);
 
         row.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -210,6 +262,23 @@ public class GroupDetailsView extends JPanel {
         metaLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
         metaLbl.setForeground(MUTED_TEXT);
         row.add(metaLbl);
+
+        row.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (onTopicSelected != null) {
+                    onTopicSelected.accept(topicId);
+                }
+            }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                row.setBackground(new Color(239, 246, 255));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                row.setBackground(new Color(250, 250, 250));
+            }
+        });
 
         return row;
     }
