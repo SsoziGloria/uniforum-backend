@@ -1,5 +1,4 @@
 
-
 # Allow java-desktop-client source code, but ignore build/IDE junk:
 *.class
 *.log
@@ -9,3 +8,7 @@
 target/
 build/
 .gradle/
+.vscode/
+ml-service/.venv/
+*.pyc
+__pycache__/

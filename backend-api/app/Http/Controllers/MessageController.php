@@ -3,21 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
-use App\Models\MessageExclusion;
 use App\Events\MessageSent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use \App\Models\GroupMember;
+
+use App\Services\MessageService;
 
 class MessageController extends Controller
 {
-    /**
-     * Fetch all messages belonging to a specific group (General or Topic stream).
-     * Protected by group.member middleware.
-     */
+    protected MessageService $messageService;
+
+    public function __construct(MessageService $messageService)
+    {
+        $this->messageService = $messageService;
+    }
+
     public function getMessages(Request $request, $group)
     {
-        // validate optional topic_id
         $validated = $request->validate([
             'topic_id' => 'nullable|integer',
         ]);
@@ -25,34 +26,13 @@ class MessageController extends Controller
         $authenticatedUser = $request->user();
         $userId = $authenticatedUser->user_id ?? $authenticatedUser->id;
 
-        // Extract raw group ID integer safely if Route Model Binding or plain ID is used
-        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int)$group;
+        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int) $group;
 
-        //Build the query focused on the verified group boundary
-        $query = Message::where('group_id', $groupId);
-
-        //Branch logic based on whether the user clicked a topic or general chat
-        if (!empty($validated['topic_id'])) {
-            $query->where('topic_id', (int) $validated['topic_id']);
-        } else {
-            // If no topic_id is passed, it's general group chat
-            $query->whereNull('topic_id');
-        }
-
-        //privacy gates
-        $messages = $query->with('sender:id,name')
-            ->where(function ($query) use ($userId) {
-                $query->where('is_restricted', false)
-                      ->orWhere('sender_id', $userId)
-                      ->orWhere(function ($subQuery) use ($userId) {
-                          $subQuery->where('is_restricted', true)
-                                   ->whereDoesntHave('exclusions', function ($exclusionCheck) use ($userId) {
-                                       $exclusionCheck->where('ex_user_id', $userId);
-                                   });
-                      });
-            })
-            ->orderBy('posted_at', 'asc')
-            ->get();
+        $messages = $this->messageService->getGroupMessages(
+            $groupId,
+            $userId,
+            $validated['topic_id'] ?? null
+        );
 
         return response()->json([
             'status' => 'Messages retrieved successfully',
@@ -61,13 +41,8 @@ class MessageController extends Controller
         ], 200);
     }
 
-    /**
-     * Store a new message and trigger real-time broadcast.
-     * Protected by group.member middleware.
-     */
     public function store(Request $request, $group)
     {
-        // Validate the incoming request text and topic pointers
         $validated = $request->validate([
             'topic_id'           => 'nullable|integer|exists:topics,topic_id',
             'msg_txt'            => 'required|string',
@@ -79,53 +54,24 @@ class MessageController extends Controller
         $authenticatedUser = $request->user();
         $userId = $authenticatedUser->user_id ?? $authenticatedUser->id;
 
-        // Extract raw group ID integer safely from route middleware boundary
-        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int)$group;
+        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int) $group;
 
-        //CHECK IF THE USER IS CURRENTLY BLACKLISTED ===
-         $membership = GroupMember::where('user_id', $userId)
-                    ->where('group_id', $groupId)
-                    ->first();
+        $result = $this->messageService->sendMessage(
+            $groupId,
+            $userId,
+            $validated
+        );
 
-         if ($membership && $membership->blacklisted_until && Carbon::parse($membership->blacklisted_until)->isFuture()) {
-           return response()->json([
-            'status'  => 'Error',
-             'message' => 'You are temporarily blacklisted from this group due to inactivity and cannot send messages until ' . $membership->blacklisted_until . '.'
-                  ], 403);
-              }
-
-        // Save the message directly inside the validated group boundary
-        $message = Message::create([
-            'group_id'      => $groupId,
-            'topic_id'      => $validated['topic_id'] ?? null,
-            'sender_id'     => $userId,
-            'msg_txt'       => $validated['msg_txt'],
-            'is_synced'     => true,
-            'is_restricted' => $validated['is_restricted'] ?? false,
-            'posted_at'     => now(),
-        ]);
-
-        //LAST ACTIVITY UPDATE
-        \App\Models\GroupMember::where('user_id', $userId)
-                    ->where('group_id', $groupId)
-                    ->update([
-                        'last_activity' => now(),
-                    ]);
-
-        // Process exclusions if message is set to restricted
-        if (!empty($validated['is_restricted']) && $request->has('excluded_user_ids')) {
-            foreach ($request->excluded_user_ids as $excludedId) {
-                MessageExclusion::create([
-                    'msg_id'     => $message->msg_id,
-                    'ex_user_id' => $excludedId
-                ]);
-            }
+        if ($result['error']) {
+            return response()->json([
+                'status'  => 'Error',
+                'message' => $result['message']
+            ], 403);
         }
 
-        // Load sender relation so the WebSocket broadcaster has the name attached
+        $message = $result['message'];
         $message->load('sender:id,name');
 
-        // Fire the Event, triggers Laravel Reverb to broadcast it in real-time
         event(new MessageSent($message));
 
         return response()->json([
@@ -135,14 +81,10 @@ class MessageController extends Controller
         ], 201);
     }
 
-    /**
-     * Offline sync engine optimizing desktop storage cache streams.
-     * (Kept self-contained since Java app handles sync boundary verification loops).
-     */
     public function sync(Request $request)
     {
         $validated = $request->validate([
-            'group_id' => 'required|integer',
+            'group_id'       => 'required|integer',
             'last_sync_time' => 'required|date_format:Y-m-d H:i:s',
         ]);
 
@@ -173,6 +115,93 @@ class MessageController extends Controller
             'message'  => 'Sync completed successfully.',
             'count'    => $messages->count(),
             'messages' => $messages
+        ], 200);
+    }
+
+    public function reply(Request $request, $group, $topic, $message)
+    {
+        $validated = $request->validate([
+            'msg_txt' => 'required|string'
+        ]);
+
+        $userId = $request->user()->user_id ?? $request->user()->id;
+
+        $reply = $this->messageService->replyToDiscussion(
+            (int) $group,
+            (int) $topic,
+            (int) $message,
+            $userId,
+            $validated['msg_txt']
+        );
+
+        return response()->json([
+            'status'  => 'Success',
+            'message' => 'Reply posted successfully.',
+            'data'    => $reply
+        ], 201);
+    }
+
+    public function upvote(Request $request, $messageId)
+    {
+        $userId = $request->user()->user_id ?? $request->user()->id;
+
+        $result = $this->messageService->toggleUpvote(
+            (int) $messageId,
+            $userId
+        );
+
+        return response()->json([
+            'status'  => 'Success',
+            'upvoted' => $result['upvoted']
+        ], 200);
+    }
+
+    public function markAnswer(Request $request, $topicId, $messageId)
+    {
+        $userId = $request->user()->user_id ?? $request->user()->id;
+
+        $result = $this->messageService->markAnswer(
+            (int) $topicId,
+            (int) $messageId,
+            $userId
+        );
+
+        if (!$result['success']) {
+            return response()->json([
+                'status'  => 'Error',
+                'message' => $result['message']
+            ], 403);
+        }
+
+        return response()->json([
+            'status'  => 'Success',
+            'message' => 'Answer marked successfully.'
+        ], 200);
+    }
+
+    public function destroy(Request $request, $group, $topic = null, $message = null)
+    {
+        $userId = $request->user()->user_id ?? $request->user()->id;
+
+        // Handles both 3-param (group, topic, message) and 2-param (group, message) route signatures
+        $targetMessageId = $message ?? $topic;
+
+        $result = $this->messageService->deleteMessage(
+            (int) $group,
+            (int) $targetMessageId,
+            $userId
+        );
+
+        if (!$result['success']) {
+            return response()->json([
+                'status'  => 'Error',
+                'message' => $result['message']
+            ], 403);
+        }
+
+        return response()->json([
+            'status'  => 'Success',
+            'message' => $result['message']
         ], 200);
     }
 }

@@ -8,299 +8,104 @@
 
 <div class="min-h-screen bg-slate-50">
 
-
     <!-- Header -->
-
     <div class="bg-white border-b border-slate-200">
-
         <div class="max-w-5xl mx-auto px-6 py-8">
 
-
-            <a href="/lecturer/groups"
-               class="text-sm text-blue-600 hover:underline">
-
-                ← Back to Groups
-
+            <a href="{{ route('lecturer.groups.index') }}"
+               class="text-sm text-blue-600 hover:underline flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Groups
             </a>
 
-
             <h1 class="mt-5 text-3xl font-bold text-slate-900">
-
                 Create Academic Group
-
             </h1>
 
-
             <p class="mt-2 text-slate-500">
-
                 Create an academic discussion group and manage student collaboration.
-
             </p>
 
-
         </div>
-
     </div>
-
-
-
-
 
     <div class="max-w-5xl mx-auto px-6 py-10">
 
-
         <div class="bg-white rounded-2xl border border-slate-200 p-8">
 
-
-            <form method="POST" action="#">
-
-                {{-- @csrf --}}
-
-                {{-- Backend:
-                     Replace action with group creation route.
-                     After successful creation:
-                     - Create group
-                     - Add authenticated lecturer as group member
-                     - Assign group admin privilege to creator
-                --}}
-
-
+            <form method="POST" action="{{ route('lecturer.groups.store') }}">
+                @csrf
 
                 <!-- Group Information -->
-
-
                 <h2 class="text-lg font-semibold text-slate-900">
-
                     Group Information
-
                 </h2>
-
-
 
                 <div class="mt-6 space-y-6">
 
-
                     <div>
-
                         <label class="block text-sm font-medium text-slate-700 mb-2">
-
                             Group Name
-
                         </label>
-
 
                         <input
                             type="text"
-                            name="name"
+                            name="group_name"
+                            value="{{ old('group_name') }}"
                             placeholder="e.g. Artificial Intelligence Research Group"
                             class="w-full rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500">
 
-
+                        @error('group_name')
+                            <p class="text-red-500 text-sm mt-1">
+                                {{ $message }}
+                            </p>
+                        @enderror
                     </div>
 
-
-
-
-
                     <div>
-
                         <label class="block text-sm font-medium text-slate-700 mb-2">
-
                             Description
-
                         </label>
-
 
                         <textarea
                             name="description"
                             rows="5"
                             placeholder="Describe the purpose of this group..."
-                            class="w-full rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500"></textarea>
+                            class="w-full rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
 
-
+                        @error('description')
+                            <p class="text-red-500 text-sm mt-1">
+                                {{ $message }}
+                            </p>
+                        @enderror
                     </div>
 
-
                 </div>
-
-
-
-
-
-
-
-                <!-- Academic Details -->
-
-
-                <div class="mt-10">
-
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-
-                        Academic Details
-
-                    </h2>
-
-
-
-
-                    <div class="mt-6 grid md:grid-cols-2 gap-6">
-
-
-
-                        <div>
-
-
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
-
-                                Course / Programme
-
-                            </label>
-
-
-
-                            <select
-                                name="course"
-                                class="w-full rounded-xl border-slate-200">
-
-
-                                <option>
-                                    Select Course
-                                </option>
-
-
-                                <option>
-                                    Software Engineering
-                                </option>
-
-
-                                <option>
-                                    Computer Science
-                                </option>
-
-
-                                <option>
-                                    Information Systems
-                                </option>
-
-
-                            </select>
-
-
-                            {{-- Backend:
-                                 Populate courses dynamically if required.
-                            --}}
-
-
-                        </div>
-
-
-
-
-
-
-                        <div>
-
-
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
-
-                                Academic Year
-
-                            </label>
-
-
-
-                            <select
-                                name="year"
-                                class="w-full rounded-xl border-slate-200">
-
-
-                                <option>
-                                    Select Year
-                                </option>
-
-
-                                <option>
-                                    Year 1
-                                </option>
-
-
-                                <option>
-                                    Year 2
-                                </option>
-
-
-                                <option>
-                                    Year 3
-                                </option>
-
-
-                                <option>
-                                    Year 4
-                                </option>
-
-
-                            </select>
-
-
-                        </div>
-
-
-
-                    </div>
-
-
-
-                </div>
-
 
                 <!-- Actions -->
-
-
                 <div class="mt-10 flex justify-end gap-4">
 
-
-
-                    <a href="/lecturer/groups"
-                       class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
-
-
+                    <a href="{{ route('lecturer.groups.index') }}"
+                       class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium transition">
                         Cancel
-
-
                     </a>
-
-
-
-
 
                     <button
                         type="submit"
-                        class="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-
-
+                        class="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-medium transition">
                         Create Group
-
-
                     </button>
-
-
 
                 </div>
 
-
-
-
             </form>
-
 
         </div>
 
-
     </div>
 
-
 </div>
-
 
 @endsection

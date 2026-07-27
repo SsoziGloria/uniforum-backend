@@ -51,127 +51,40 @@
 
         <!-- Group Cards -->
 
-        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-
-            <!-- Card 1 -->
-
+           
+           
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition">
-
-                <div class="p-6">
-
-                    <div class="flex items-center justify-between">
-
-                        <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
-                            Software Engineering
-                        </span>
-
-                        <span class="text-sm text-slate-500">
-                            -- Members
-                        </span>
-
-                    </div>
-
-                    <h2 class="mt-5 text-xl font-bold text-slate-900">
-                        BSSE Year II
-                    </h2>
-
-                    <p class="mt-3 text-slate-600">
-                        General discussions, assignments, and class collaboration.
-                    </p>
-
-                    <div class="mt-6 flex justify-between items-center">
-
-                        <span class="text-sm text-green-600">
-                            ● Active today
-                        </span>
-
-                        <a href="/student/groups/show"
-                           class="text-blue-600 font-medium hover:underline">
-                             Open →
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Card 2 -->
-
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition">
-
-                <div class="p-6">
-
-                    <div class="flex items-center justify-between">
-
-                        <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs">
-                            Artificial Intelligence
-                        </span>
-
-                        <span class="text-sm text-slate-500">
-                            -- Members
-                        </span>
-
-                    </div>
-
-                    <h2 class="mt-5 text-xl font-bold text-slate-900">
-                        AI Course Forum
-                    </h2>
-
-                    <p class="mt-3 text-slate-600">
-                        Machine learning discussions, tutorials and project help.
-                    </p>
-
-                    <div class="mt-6 flex justify-between items-center">
-
-                        <span class="text-sm text-green-600">
-                            ● 15 New Posts
-                        </span>
-
-                        <a href="/student/groups/show"
-                           class="text-blue-600 font-medium hover:underline">
-                            Open →
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Card 3 -->
-
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition">
+                @forelse($groups as $group)
 
                 <div class="p-6">
 
                     <div class="flex items-center justify-between">
 
                         <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs">
-                            Databases
+                             Academic Group
                         </span>
 
                         <span class="text-sm text-slate-500">
-                            -- Members
+                            {{ $group->members()->count() }} Members
                         </span>
 
                     </div>
 
                     <h2 class="mt-5 text-xl font-bold text-slate-900">
-                        Database Systems
+                        {{ $group->group_name }}
                     </h2>
 
                     <p class="mt-3 text-slate-600">
-                        SQL discussions, assignments and revision materials.
+                        {{ $group->description }}
                     </p>
 
                     <div class="mt-6 flex justify-between items-center">
 
                         <span class="text-sm text-orange-500">
-                            ● 8 New Questions
+                            ● Active
                         </span>
 
-                        <a href="/student/groups/show"
+                        <a href="{{ route('student.groups.show', $group->group_id) }}"
                            class="text-blue-600 font-medium hover:underline">
                             Open →
                         </a>
@@ -181,10 +94,17 @@
                 </div>
 
             </div>
+            @empty
+
+            <p class="text-slate-500">
+               You have not joined any groups yet.
+            </p>
+
+            @endforelse
 
         </div>
 
-    </div>
+        
 
 </div>
 

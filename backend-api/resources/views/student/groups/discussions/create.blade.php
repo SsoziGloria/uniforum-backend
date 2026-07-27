@@ -13,7 +13,7 @@
 
         <div class="max-w-4xl mx-auto px-6 py-8">
 
-            <a href="/student/discussions"
+            <a href="{{ route('student.discussions.index', $groupId) }}"
                class="text-sm text-blue-600 hover:underline flex items-center gap-2">
 
                 <svg class="w-4 h-4"
@@ -58,7 +58,8 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-8">
 
 
-            <form method="POST" action="#">
+            <form method="POST" action="{{ route('student.discussions.store', $groupId) }}">
+                @csrf
 
 
                 <!-- Title -->
@@ -71,11 +72,13 @@
 
 
                     <input type="text"
+                           name="title"
+                           value="{{ old('title') }}"
                            placeholder="Enter your discussion title"
                            class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500">
 
                     <p class="mt-2 text-xs text-slate-400">
-                        Use a clear title that describes your question.
+                        Use a clear title that describes your topic.
                     </p>
 
                 </div>
@@ -94,7 +97,8 @@
                     </label>
 
 
-                    <select class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500">
+                    <select name="ml_category" 
+                            class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500">
 
 
                         <option>
@@ -144,63 +148,13 @@
 
 
                     <textarea
+                        name="description"
                         rows="7"
                         placeholder="Explain your question or topic..."
-                        class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        class="w-full rounded-xl border-slate-200 focus:ring-blue-500 focus:border-blue-500">{{ old('description') }}</textarea>
 
 
                 </div>
-
-
-
-
-
-
-
-                <!-- Attachment -->
-
-                <div class="mt-6">
-
-
-                    <label class="block text-sm font-medium text-slate-700 mb-2">
-                        Attachment
-                    </label>
-
-
-                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center">
-
-
-                        <svg class="mx-auto w-10 h-10 text-slate-400"
-                             fill="none"
-                             stroke="currentColor"
-                             stroke-width="2"
-                             viewBox="0 0 24 24">
-
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M12 4v16m8-8H4"/>
-
-                        </svg>
-
-
-                        <p class="mt-3 text-sm text-slate-500">
-                            Upload supporting files (optional)
-                        </p>
-
-
-                        <button type="button"
-                                class="mt-3 text-blue-600 text-sm font-medium">
-                            Choose File
-                        </button>
-
-
-                    </div>
-
-
-                </div>
-
-
-
 
 
                 <!-- AI Notice -->
@@ -241,7 +195,7 @@
                 <div class="mt-8 flex justify-end gap-4">
 
 
-                    <a href="/student/discussions"
+                    <a href="{{ route('student.discussions.index', $groupId) }}"
                        class="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
 
                        Cancel

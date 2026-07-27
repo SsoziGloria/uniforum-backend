@@ -14,7 +14,7 @@
     <div class="bg-white rounded-2xl border border-slate-200 p-6">
 
 
-        <a href="/student/groups/show"
+        <a href="{{ route('student.groups.show', $group->group_id) }}"
            class="text-sm text-blue-600 hover:underline">
 
             ← Back to Group
@@ -24,7 +24,7 @@
 
         <h2 class="mt-4 text-2xl font-bold text-slate-800">
 
-            BSSE Year II Group Statistics
+            {{ $group->group_name }} Group Statistics
 
         </h2>
 
@@ -63,10 +63,8 @@
                     Total Members
                 </p>
 
-                {{-- Backend: Count group members --}}
-
                 <h4 class="text-3xl font-bold text-blue-600 mt-2">
-                    --
+                    {{ $totalMembers }}
                 </h4>
 
             </div>
@@ -81,10 +79,9 @@
                     Discussions
                 </p>
 
-                {{-- Backend: Count discussions in this group --}}
 
                 <h4 class="text-3xl font-bold text-blue-600 mt-2">
-                    --
+                    {{ $discussionCount }}
                 </h4>
 
             </div>
@@ -99,10 +96,9 @@
                     Total Messages
                 </p>
 
-                {{-- Backend: Count messages/posts --}}
 
                 <h4 class="text-3xl font-bold text-blue-600 mt-2">
-                    --
+                    {{ $messageCount }}
                 </h4>
 
             </div>
@@ -117,10 +113,8 @@
                     Active Today
                 </p>
 
-                {{-- Backend: Members active today --}}
-
                 <h4 class="text-3xl font-bold text-blue-600 mt-2">
-                    --
+                    {{ $activeToday }}
                 </h4>
 
             </div>
@@ -166,39 +160,13 @@
                 </p>
 
 
-                {{-- Backend:
-                     Calculate percentage of members
-                     actively participating
-                --}}
-
                 <p class="text-2xl font-bold text-blue-600 mt-2">
-                    -- %
+                    {{ $participationRate }}%
                 </p>
 
 
             </div>
 
-
-
-
-
-            <div>
-
-                <p class="text-sm text-slate-500">
-                    Questions Answered
-                </p>
-
-
-                {{-- Backend:
-                     Count questions with accepted answers/replies
-                --}}
-
-                <p class="text-2xl font-bold text-blue-600 mt-2">
-                    --
-                </p>
-
-
-            </div>
 
 
         </div>
@@ -232,49 +200,38 @@
         </div>
 
 
-        {{-- Backend:
-             Sort members by participation/activity
-        --}}
-
 
         <div class="divide-y divide-slate-100">
 
-
-            <div class="p-6 flex justify-between">
-
-                <span>
-                    Sarah Namukasa
-                </span>
-
-                <span class="text-slate-500">
-                    -- posts
-                </span>
-
-            </div>
-
+        @forelse( $mostActiveMembers as $member)
 
 
             <div class="p-6 flex justify-between">
 
                 <span>
-                    Peter Okello
+                   {{ $member->sender->name }}
                 </span>
 
                 <span class="text-slate-500">
-                    -- posts
+                     {{ $member->posts }} posts
                 </span>
 
             </div>
+            @empty
+
+                <div class="p-6 text-slate-500">
+
+                   No activity yet.
+
+                </div>
+
+            @endforelse
 
 
         </div>
 
 
     </div>
-
-
-
-
 
 
 
@@ -310,12 +267,8 @@
                 </p>
 
 
-                {{-- Backend:
-                     Count warnings given to members
-                --}}
-
                 <p class="text-3xl font-bold text-orange-500 mt-2">
-                    --
+                    {{ $warningsIssued }}
                 </p>
 
             </div>
@@ -331,34 +284,8 @@
                 </p>
 
 
-                {{-- Backend:
-                     Members currently restricted
-                --}}
-
                 <p class="text-3xl font-bold text-red-600 mt-2">
-                    --
-                </p>
-
-
-            </div>
-
-
-
-
-
-            <div>
-
-                <p class="text-sm text-slate-500">
-                    Moderation Actions
-                </p>
-
-
-                {{-- Backend:
-                     Total moderation actions performed
-                --}}
-
-                <p class="text-3xl font-bold text-blue-600 mt-2">
-                    --
+                    {{ $currentlyBlacklisted }}
                 </p>
 
 
@@ -370,10 +297,6 @@
 
 
     </div>
-
-
-
-
 
 
 
@@ -398,35 +321,34 @@
         </div>
 
 
-
-        {{-- Backend:
-             Retrieve popular discussions/topics
-        --}}
-
-
         <div class="p-6 space-y-4">
+        @forelse($popularDiscussions as $discussion)
 
 
-            <div class="bg-slate-50 rounded-xl p-4">
+            <div class="bg-slate-50 rounded-xl p-4 flex justify-between">
 
-                Laravel Authentication Problem
+                <span>
+
+                   {{ $discussion->title }}
+
+                </span>
+
+                <span class="text-slate-500">
+
+                     {{ $discussion->messages_count }} messages
+
+                </span>
+
+            </div>
+        @empty
+
+            <div class="text-slate-500">
+
+                No discussions yet.
 
             </div>
 
-
-            <div class="bg-slate-50 rounded-xl p-4">
-
-                Database Design Questions
-
-            </div>
-
-
-            <div class="bg-slate-50 rounded-xl p-4">
-
-                AI Project Ideas
-
-            </div>
-
+        @endforelse
 
         </div>
 

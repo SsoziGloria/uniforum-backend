@@ -51,13 +51,9 @@
 
         <div class="bg-white rounded-2xl border border-slate-200 p-8">
 
-            <form method="POST" action="#" x-data="{ groupRole: 'student' }">
+            <form method="POST" action="{{ route('student.groups.store') }}">
 
-                {{-- Backend:
-                     Replace "#" with the route that stores a new group.
-                --}}
-
-                {{-- @csrf --}}
+             @csrf
 
                 <!-- Group Information -->
 
@@ -75,15 +71,18 @@
 
                         <input
                             type="text"
-                            name="name"
+                            name="group_name"
                             placeholder="e.g. Software Engineering Year 2"
                             class="w-full rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500">
 
-                        {{-- Backend:
-                             Populate old('name') and validate required.
-                        --}}
+                        @error('group_name')
+                        <p class="text-red-500 text-sm mt-1">
+                           {{ $message }}
+                        </p>
+                       @enderror
 
                     </div>
+                    
 
 
 
@@ -99,77 +98,18 @@
                             placeholder="Describe the purpose of this group..."
                             class="w-full rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500"></textarea>
 
-                        {{-- Backend:
-                             Save group description.
-                        --}}
-
+                        @error('description')
+                        <p class="text-red-500 text-sm mt-1">
+                           {{ $message }}
+                        </p>
+                        @enderror
                     </div>
 
                 </div>
 
 
 
-                <!-- Academic Details -->
-
-                <div class="mt-10">
-
-                    <h2 class="text-lg font-semibold text-slate-900">
-                        Academic Details
-                    </h2>
-
-                    <div class="mt-6 grid md:grid-cols-2 gap-6">
-
-                        <div>
-
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Course / Programme
-                            </label>
-
-                            <select
-                                name="course"
-                                class="w-full rounded-xl border-slate-200">
-
-                                <option>Select Course</option>
-                                <option>Software Engineering</option>
-                                <option>Computer Science</option>
-                                <option>Information Systems</option>
-
-                            </select>
-
-                            {{-- Backend:
-                                 Populate courses dynamically.
-                            --}}
-
-                        </div>
-
-
-
-                        <div>
-
-                            <label class="block text-sm font-medium text-slate-700 mb-2">
-                                Academic Year
-                            </label>
-
-                            <select
-                                name="year"
-                                class="w-full rounded-xl border-slate-200">
-
-                                <option>Select Year</option>
-                                <option>Year 1</option>
-                                <option>Year 2</option>
-                                <option>Year 3</option>
-                                <option>Year 4</option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
+    
                         
                 <!-- Actions -->
 

@@ -17,10 +17,25 @@ class Group extends Model
     public $incrementing = true;
     protected $keyType = 'int';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Cascade delete child relations when a group is deleted
+        static::deleting(function ($group) {
+            $group->topics()->get()->each(function ($topic) {
+                $topic->delete();
+            });
+            Message::where('group_id', $group->group_id)->delete();
+            GroupMember::where('group_id', $group->group_id)->delete();
+            $group->participationScores()->delete();
+        });
+    }
+
 
     public function creator(): BelongsTo
     {
-      return $this->belongsTo(User::class, 'created_by', 'user_id');
+      return $this->belongsTo(User::class, 'created_by', 'id');
     }
 
     public function topics():HasMany
@@ -31,7 +46,20 @@ class Group extends Model
     public function members()
     {
         //links Groups to Users using group_members table
-        return $this->belongsToMany(User::class, 'group_members', 'group_id', 'user_id');
+        return $this->belongsToMany(
+            User::class, 
+            'group_members', 
+            'group_id', 
+            'user_id')->withPivot('role', 'joined_at');
 
     }
+    public function participationScores()
+    {
+        return $this->hasMany(
+            ParticipationScore::class,
+            'group_id',
+            'group_id'
+        );
+    }
+    
 }
