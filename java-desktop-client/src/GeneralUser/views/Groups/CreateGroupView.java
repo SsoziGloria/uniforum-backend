@@ -1,4 +1,4 @@
-package Student.Groups;
+package GeneralUser.views.Groups;
 
 import GeneralUser.api.ApiClient;
 import javax.swing.*;

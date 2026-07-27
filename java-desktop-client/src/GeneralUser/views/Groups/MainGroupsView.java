@@ -22,12 +22,22 @@ public class MainGroupsView extends JPanel {
     private JPanel groupsContainer; // Reference to hold/refresh group rows or empty state
     private String authToken;
     private String currentUserName;
-    
+    private final Runnable onCreateGroupClicked;
+private final Runnable onBrowseGroupsClicked;
+    private final java.util.function.BiConsumer<Integer, String> onOpenChatClicked;
+private final java.util.function.BiConsumer<Integer, Integer> onOpenTopicClicked;
 
     // Constructor taking a simple callback action for clicking create group
-    public MainGroupsView(String token, String currentUserName, Runnable onCreateGroupClicked, Runnable onBrowseGroupsClicked) {
+   public MainGroupsView(String token, String currentUserName, 
+                      Runnable onCreateGroupClicked, Runnable onBrowseGroupsClicked,
+                      java.util.function.BiConsumer<Integer, String> onOpenChatClicked,
+                      java.util.function.BiConsumer<Integer, Integer> onOpenTopicClicked) {
         this.authToken = token;
         this.currentUserName = (currentUserName != null && !currentUserName.trim().isEmpty()) ? currentUserName : "User";
+        this.onCreateGroupClicked = onCreateGroupClicked;
+    this.onBrowseGroupsClicked = onBrowseGroupsClicked;
+    this.onOpenChatClicked = onOpenChatClicked;
+    this.onOpenTopicClicked = onOpenTopicClicked;
 
         setLayout(new BorderLayout());
         setBackground(PAGE_BG);
@@ -314,6 +324,7 @@ public class MainGroupsView extends JPanel {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 fetchAndOpenGroupDetails(groupId);
+<<<<<<< HEAD:java-desktop-client/src/Student/Groups/MainGroupsView.java
             }
         };
 
@@ -450,6 +461,129 @@ cl.show(parent, detailCardName);
     }
 }
 
+=======
+            }
+        };
+
+        card.addMouseListener(clickAdapter);
+        
+        // Ensure inner text components also pass clicks through to the card
+        for (Component comp : leftContent.getComponents()) {
+            comp.addMouseListener(clickAdapter);
+        }
+
+        return card;
+    }
+    
+
+  // --- FETCH GROUP DETAILS AND EXTRACT "is_admin" & "is_member" FLAGS ---
+private void fetchAndOpenGroupDetails(int groupId) {
+    new Thread(() -> {
+        String response = ApiClient.get("/groups/" + groupId, authToken);
+        
+        // DEBUG: Print the raw API response to your console to check keys
+        System.out.println("GROUP DETAILS API RESPONSE FOR " + groupId + ": " + response);
+
+        boolean isAdmin = false;
+        boolean isMember = false; 
+        String fetchedGroupName = "";
+        String fetchedDescription = "";
+
+        try {
+            if (response != null && !response.isEmpty()) {
+                String jsonBody = response;
+                if (response.contains(":")) {
+                    int firstColon = response.indexOf(":");
+                    try {
+                        Integer.parseInt(response.substring(0, firstColon).trim());
+                        jsonBody = response.substring(firstColon + 1).trim();
+                    } catch (NumberFormatException ignored) {}
+                }
+
+                isAdmin = extractBoolean(jsonBody, "is_admin");
+                isMember = extractBoolean(jsonBody, "is_member");
+
+                // Fallback checks for different possible JSON key names from Laravel
+                if (!isMember) {
+                    if (extractBoolean(jsonBody, "joined") || extractBoolean(jsonBody, "is_joined")) {
+                        isMember = true;
+                    }
+                }
+
+                if (!isMember) {
+                    String userRole = extractJsonValue(jsonBody, "user_role");
+                    if (userRole != null && !userRole.isEmpty() && !userRole.equalsIgnoreCase("null")) {
+                        isMember = true;
+                    }
+                }
+
+                fetchedGroupName = extractJsonValue(jsonBody, "group_name");
+                if (fetchedGroupName.isEmpty()) fetchedGroupName = extractJsonValue(jsonBody, "name");
+                
+                fetchedDescription = extractJsonValue(jsonBody, "description");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        final boolean adminStatus = isAdmin;
+        final boolean memberStatus = isMember; 
+        final String gName = fetchedGroupName.isEmpty() ? "Group Details" : fetchedGroupName;
+        final String gDesc = fetchedDescription.isEmpty() ? "No description provided." : fetchedDescription;
+
+        SwingUtilities.invokeLater(() -> {
+            Container parent = this.getParent();
+            if (parent != null && parent.getLayout() instanceof CardLayout) {
+                CardLayout cl = (CardLayout) parent.getLayout();
+
+                GroupDetailsView detailsView = new GroupDetailsView(
+                    groupId,
+                    "Academic Group",
+                    gName,
+                    gDesc,
+                    memberStatus, 
+                    adminStatus,  
+                    authToken,
+                    () -> cl.show(parent, "GROUPS"), 
+                    () -> {
+                        // Implement join group API call here
+                        new Thread(() -> {
+                            ApiClient.post("/groups/" + groupId + "/join", "", authToken);
+                            SwingUtilities.invokeLater(() -> {
+                                JOptionPane.showMessageDialog(this, "Successfully joined group!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                                fetchAndOpenGroupDetails(groupId); 
+                            });
+                        }).start();
+                    }, 
+                    () -> {
+                        if (onOpenChatClicked != null) {
+                            onOpenChatClicked.accept(groupId, gName); 
+                        }
+                    },
+                    () -> {},
+                    topicId -> {  
+                        if (onOpenTopicClicked != null) {
+                            onOpenTopicClicked.accept(groupId, topicId);
+                        }
+                    }
+                );
+                
+                String detailCardName = "GROUP_DETAILS_" + groupId;
+
+                // Remove existing component with this card name if present to avoid CardLayout caching old state
+                for (Component comp : parent.getComponents()) {
+                    // Clean up any stale layout elements if needed
+                }
+                
+                parent.add(detailsView, detailCardName);
+                cl.show(parent, detailCardName);
+                parent.revalidate();
+                parent.repaint();
+            }
+        });
+    }).start();
+}
+>>>>>>> Tracy-java-ui:java-desktop-client/src/GeneralUser/views/Groups/MainGroupsView.java
    private boolean extractBoolean(String json, String key) {
         try {
             // If the JSON contains a "data" wrapper object, make sure we look inside it

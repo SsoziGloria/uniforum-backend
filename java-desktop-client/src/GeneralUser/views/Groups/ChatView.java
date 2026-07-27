@@ -1,4 +1,4 @@
-package Student.Groups;
+package GeneralUser.views.Groups;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

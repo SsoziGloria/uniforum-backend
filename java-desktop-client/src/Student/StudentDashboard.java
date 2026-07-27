@@ -211,13 +211,16 @@ public class StudentDashboard extends JFrame {
         contentCards.add(createDashboardHomePanel(), "DASHBOARD");
         
         mainGroupsView = new MainGroupsView(
-            token, 
-            currentUserName,
-            () -> cardLayout.show(contentCards, "CREATE_GROUP"),    
-            () -> cardLayout.show(contentCards, "BROWSE_GROUPS")    
-        );
-        contentCards.add(mainGroupsView, "GROUPS");
+    token, 
+    currentUserName,
+    () -> cardLayout.show(contentCards, "CREATE_GROUP"),    
+    () -> cardLayout.show(contentCards, "BROWSE_GROUPS"),
+    (groupId, gName) -> openChatFromMain(groupId, gName),       // Wire up chat callback
+    (groupId, topicId) -> openTopicDetailFromMain(groupId, topicId, "GROUP_DETAILS_" + groupId) // Wire up topic callback
+);
+contentCards.add(mainGroupsView, "GROUPS");
 
+<<<<<<< HEAD
         contentCards.add(new CreateGroupView(
             authToken,
             () -> {
@@ -234,6 +237,24 @@ public class StudentDashboard extends JFrame {
             groupId -> openBrowseGroupJoin(groupId)
         );
         contentCards.add(browseGroupsView, "BROWSE_GROUPS");
+=======
+contentCards.add(new CreateGroupView(
+    authToken,
+    () -> {
+        mainGroupsView.refreshData();
+        cardLayout.show(contentCards, "GROUPS");
+    },
+    () -> cardLayout.show(contentCards, "GROUPS")
+), "CREATE_GROUP");
+
+browseGroupsView = new BrowseGroupsView(
+    authToken,
+    () -> cardLayout.show(contentCards, "GROUPS"),
+    groupId -> openBrowseGroupDetails(groupId),
+    groupId -> openBrowseGroupJoin(groupId)
+);
+contentCards.add(browseGroupsView, "BROWSE_GROUPS");
+>>>>>>> Tracy-java-ui
 
         contentCards.add(createPlaceholderPanel("Discussions Module"), "DISCUSSIONS");
         contentCards.add(createPlaceholderPanel("Quizzes Module"), "QUIZZES");
