@@ -13,7 +13,6 @@ use App\Http\Controllers\ParticipationController;
 use App\Http\Controllers\StudentPerformanceController;
 use App\Http\Controllers\RecommendationController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Public Auth Routes
@@ -25,12 +24,12 @@ Route::post('/register', [AuthController::class, 'register']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Sanctum Auth)
+| Protected Routes (Sanctum Auth Required)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    // --- Authentication & Account ---
+    // --- Authentication & Account Management ---
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
@@ -41,19 +40,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return Broadcast::auth($request);
     });
 
-    // --- General Utilities ---
+    // --- Offline Data Syncing & Analytics ---
     Route::get('/messages/sync', [MessageController::class, 'sync']);
-
-    Route::get('/lecturer/students', [StudentPerformanceController::class, 'index'])
-    ->middleware('lecturer')
-    ->name('api.lecturer.students.index');
-
     Route::get('/recommendations', [RecommendationController::class, 'index']);
+
+    // --- Lecturer Overall Performance Dashboard ---
+    Route::get('/lecturer/students', [StudentPerformanceController::class, 'index'])
+        ->middleware('lecturer')
+        ->name('api.lecturer.students.index');
 
 
     /*
     |----------------------------------------------------------------------
-    | Groups Management (Global / General)
+    | Groups Management (Global Search, Create, Join/Leave)
     |----------------------------------------------------------------------
     */
     // Note: 'search' MUST come before '{group}' to prevent dynamic binding conflicts
@@ -68,29 +67,43 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Group Scope (Requires Group Membership)
+    | Group-Scoped Operations (Requires Group Membership)
     |----------------------------------------------------------------------
     */
     Route::middleware(['group.member'])->prefix('groups/{group}')->group(function () {
 
-        // --- Group Overview & Stats ---
+        // --- Group Analytics & Statistics ---
         Route::get('/statistics', [GroupController::class, 'statistics']);
-        Route::get('/participation/results', [ParticipationController::class, 'results']);
-        Route::get('/participation/roster', [ParticipationController::class, 'groupRoster']); // <-- ADDED HERE
 
-        // --- Group Members Management ---
+
+        // --- Participation Marks & Grading Criteria ---
+        Route::prefix('participation')->group(function () {
+            Route::get('/results', [ParticipationController::class, 'results']);
+            Route::get('/roster', [ParticipationController::class, 'groupRoster']);
+            
+            // Added: Lecturer Participation Criteria Configuration
+            Route::get('/settings', [ParticipationController::class, 'settings'])->middleware('lecturer');
+            Route::post('/settings', [ParticipationController::class, 'storeCriterion'])->middleware('lecturer');
+            Route::put('/settings', [ParticipationController::class, 'updateCriteria'])->middleware('lecturer');
+            Route::delete('/settings/{criterion}', [ParticipationController::class, 'destroyCriterion'])->middleware('lecturer');
+        });
+
+
+        // --- Group Members & Moderation ---
         Route::get('/members', [GroupController::class, 'getGroupMembers']);
         Route::put('/members/{user}/role', [GroupMemberController::class, 'updateRole']);
+        Route::post('/members/{user}/promote', [GroupMemberController::class, 'promoteMember']);
+        Route::post('/members/{user}/demote', [GroupMemberController::class, 'demoteMember']);
         Route::post('/members/{user}/warning', [GroupMemberController::class, 'issueWarning']);
         Route::post('/members/{user}/blacklist', [GroupMemberController::class, 'blacklist']);
         Route::post('/members/{user}/reinstate', [GroupMemberController::class, 'reinstate']);
-        
-    Route::post('/members/{user}/promote', [GroupMemberController::class, 'promoteMember']);
-    Route::post('/members/{user}/demote', [GroupMemberController::class, 'demoteMember']);
+
 
         // --- General Group Chat Messages ---
         Route::get('/messages', [MessageController::class, 'getMessages']);
         Route::post('/messages', [MessageController::class, 'store']);
+        Route::delete('/messages/{message}', [MessageController::class, 'destroyChatMessage']); // Added: Delete general message
+
 
         // --- Topics / Forum Threads ---
         Route::prefix('topics')->group(function () {
@@ -110,7 +123,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             });
         });
 
-        // --- Quizzes ---
+
+        // --- Quizzes & Assessments ---
         Route::prefix('quizzes')->group(function () {
             Route::get('/', [QuizController::class, 'index']);
             Route::post('/', [QuizController::class, 'store'])->middleware('lecturer');
