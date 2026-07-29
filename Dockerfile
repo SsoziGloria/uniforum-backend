@@ -1,11 +1,14 @@
 FROM php:8.4-apache
 
-# Install system dependencies & Composer
+# Install system dependencies, Composer, and Node.js for Vite assets
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    curl \
     libpq-dev \
     libzip-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip
 
 # Enable Apache Rewrite Module
@@ -30,16 +33,18 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set up Laravel environment, create database.sqlite, and set permissions
+# Set up Laravel environment, install PHP/NPM dependencies, build Vite assets, and set permissions
 RUN cd /var/www/html/backend-api \
     && cp .env.example .env \
     && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env \
     && touch database/database.sqlite \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-scripts \
+    && npm install \
+    && npm run build \
     && php artisan key:generate --force \
     && php artisan migrate --force \
     && chown -R www-data:www-data /var/www/html/backend-api \
-    && chmod -R 775 storage bootstrap/cache database
+    && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80
