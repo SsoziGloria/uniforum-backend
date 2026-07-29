@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Enable Apache Rewrite Module
 RUN a2enmod rewrite
 
-# Configure Apache DocumentRoot to point to Laravel's public directory
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+# Configure Apache DocumentRoot to point to Laravel's public directory inside backend-api
+RUN sed -i 's!/var/www/html!/var/www/html/backend-api/public!g' /etc/apache2/sites-available/000-default.conf
 
 # Add Directory permissions for Apache
-RUN echo '<Directory /var/www/html/public>\n\
+RUN echo '<Directory /var/www/html/backend-api/public>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
@@ -27,12 +27,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files first so composer.json is present
+# Copy all project files
 COPY . .
 
-# Run composer and set permissions
-RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache \
+# Install composer dependencies inside backend-api and set permissions
+RUN cd /var/www/html/backend-api \
+    && mkdir -p storage bootstrap/cache \
     && composer install --no-dev --optimize-autoloader \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
