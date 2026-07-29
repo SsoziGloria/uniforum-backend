@@ -2,22 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Web\StudentGroupController;
-use App\Http\Controllers\Web\ProfileController;
-use App\Http\Controllers\Web\StudentGroupStatisticsController;
-use App\Http\Controllers\Web\TopicController;
+use App\Http\Controllers\web\StudentGroupController;
+use App\Http\Controllers\web\ProfileController;
+use App\Http\Controllers\web\StudentGroupStatisticsController;
+use App\Http\Controllers\web\TopicController;
 use App\Http\Controllers\MessageController;
-use App\Http\Controllers\Web\DiscussionMessageController;
-use App\Http\Controllers\Web\StudentQuizController;
-use App\Http\Controllers\Web\NotificationController;
-use App\Http\Controllers\Web\StudentDashboardController;
-use App\Http\Controllers\Web\LecturerGroupController;
-use App\Http\Controllers\Web\LecturerDiscussionController;
-use App\Http\Controllers\Web\LecturerQuizController;
-use App\Http\Controllers\Web\LecturerStudentController;
+use App\Http\Controllers\web\DiscussionMessageController;
+use App\Http\Controllers\web\StudentQuizController;
+use App\Http\Controllers\web\NotificationController;
+use App\Http\Controllers\web\StudentDashboardController;
+use App\Http\Controllers\web\LecturerGroupController;
+use App\Http\Controllers\web\LecturerDiscussionController;
+use App\Http\Controllers\web\LecturerQuizController;
+use App\Http\Controllers\web\LecturerStudentController;
 use App\Http\Controllers\Web\LecturerNotificationController;
-use App\Http\Controllers\Web\LecturerDashboardController;
-use App\Http\Controllers\Web\RecommendationController;
+use App\Http\Controllers\web\LecturerDashboardController;
+use App\Http\Controllers\web\RecommendationController;
 
 
 

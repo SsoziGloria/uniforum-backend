@@ -33,7 +33,7 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set up environment with forced HTTPS asset URL, build assets, and cache configs
+# Set up environment, build assets, dump autoload, and cache configs
 RUN cd /var/www/html/backend-api \
     && cp .env.example .env \
     && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env \
@@ -42,6 +42,7 @@ RUN cd /var/www/html/backend-api \
     && touch database/database.sqlite \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-scripts \
+    && composer dump-autoload \
     && npm install \
     && npm run build \
     && php artisan key:generate --force \
