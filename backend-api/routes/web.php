@@ -15,7 +15,7 @@ use App\Http\Controllers\web\LecturerGroupController;
 use App\Http\Controllers\web\LecturerDiscussionController;
 use App\Http\Controllers\web\LecturerQuizController;
 use App\Http\Controllers\web\LecturerStudentController;
-use App\Http\Controllers\Web\LecturerNotificationController;
+use App\Http\Controllers\web\LecturerNotificationController;
 use App\Http\Controllers\web\LecturerDashboardController;
 use App\Http\Controllers\web\RecommendationController;
 
