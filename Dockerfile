@@ -30,10 +30,10 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Install composer dependencies inside backend-api and set permissions
+# Install composer dependencies without scripts and set permissions
 RUN cd /var/www/html/backend-api \
     && mkdir -p storage bootstrap/cache \
-    && composer install --no-dev --optimize-autoloader \
+    && composer install --no-dev --optimize-autoloader --no-scripts \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
