@@ -30,13 +30,16 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set up Laravel environment, install dependencies, and set strict permissions
+# Set up Laravel environment, create database.sqlite, and set permissions
 RUN cd /var/www/html/backend-api \
     && cp .env.example .env \
+    && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env \
+    && touch database/database.sqlite \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-scripts \
     && php artisan key:generate --force \
+    && php artisan migrate --force \
     && chown -R www-data:www-data /var/www/html/backend-api \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache database
 
 EXPOSE 80
