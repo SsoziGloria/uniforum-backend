@@ -81,17 +81,38 @@ class GroupService
     /**
      * Get all groups or search groups.
     */
-    public function browseGroups(?string $search = null)
+    /**
+     * Get all groups or search groups with membership status for a user.
+     */
+    public function browseGroups(?string $search = null, ?int $userId = null)
     {
-        return Group::withCount('members')
+        $groups = Group::withCount('members')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                    $q->where('group_name', 'like', "%{$search}%")
                      ->orWhere('description', 'like', "%{$search}%");
-            });
-        })
-        ->latest()
-        ->get();
+                });
+            })
+            ->latest()
+            ->get();
+
+        if (!$userId) {
+            return $groups;
+        }
+
+        // Map through groups to append 'is_member' status
+        return $groups->map(function ($group) use ($userId) {
+            $groupId = $group->group_id ?? $group->id;
+            
+            $isMember = GroupMember::where('group_id', $groupId)
+                ->where('user_id', $userId)
+                ->exists();
+
+            $groupArray = $group->toArray();
+            $groupArray['is_member'] = $isMember;
+
+            return $groupArray;
+        });
     }
     /**
      * Get group details

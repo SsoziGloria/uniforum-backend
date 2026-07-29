@@ -67,7 +67,8 @@ class GroupController extends Controller
         public function search(Request $request)
         {
             $groups = $this->groupService->browseGroups(
-            $request->query('search')
+                $request->query('search'),
+                $request->user()->id
             );
 
             return response()->json([

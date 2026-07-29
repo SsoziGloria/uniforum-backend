@@ -209,4 +209,42 @@ class QuizController extends Controller
             'data'   => $report
         ], 200);
     }
+
+    /**
+     * SHOW QUIZ DETAILS (Lecturer overview with stats)
+     */
+    public function show(Request $request, $group, $quiz_id)
+    {
+        $groupId = is_object($group) ? ($group->group_id ?? $group->id) : (int)$groupId;
+
+        $quiz = Quiz::where('group_id', $groupId)
+            ->with('questions')
+            ->findOrFail($quiz_id);
+
+        $totalStudents = User::whereHas('groups', function($q) use ($groupId) {
+            $q->where('groups.group_id', $groupId);
+        })->where('role', 'student')->count();
+
+        $submissions = \App\Models\StudentSubmission::where('quiz_id', $quiz_id)
+            ->whereIn('status', ['submitted', 'auto-submitted'])
+            ->get();
+
+        $submittedCount = $submissions->count();
+        $totalPossible = $quiz->questions->sum('marks_worth');
+
+        $avgScore = 0;
+        if ($submittedCount > 0 && $totalPossible > 0) {
+            $avgScore = round(($submissions->avg('total_score') / $totalPossible) * 100);
+        }
+
+        return response()->json([
+            'status' => 'Success',
+            'data'   => [
+                'quiz'            => $quiz,
+                'total_students'  => $totalStudents,
+                'submitted_count' => $submittedCount,
+                'average_score'   => $avgScore
+            ]
+        ], 200);
+    }
 }

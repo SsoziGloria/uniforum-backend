@@ -128,12 +128,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('quizzes')->group(function () {
             Route::get('/', [QuizController::class, 'index']);
             Route::post('/', [QuizController::class, 'store'])->middleware('lecturer');
-            Route::post('/{quiz}/launch', [QuizController::class, 'launchQuiz']);
+            
+            // Added Lecturer & Student Quiz Management Routes
+            Route::get('/{quiz}', [QuizController::class, 'show'])->middleware('lecturer'); // View individual quiz details
+            Route::post('/{quiz}/launch', [QuizController::class, 'launchQuiz'])->middleware('lecturer');
+            
+            // Results & Reports
+            Route::get('/{quiz}/results', [QuizController::class, 'resultsReport']); // Handles both or can be restricted
+            
+            // Student Attempt Routes
             Route::post('/{quiz}/start', [QuizController::class, 'startAttempt']);
             Route::post('/{quiz}/submit', [QuizController::class, 'submitAttempt']);
-            Route::get('/{quiz}/results', [QuizController::class, 'resultsReport']);
         });
-
     });
 
 });

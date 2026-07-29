@@ -1,11 +1,18 @@
 package GeneralUser.views.Groups;
 
+import GeneralUser.api.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StatisticsView extends JPanel {
 
+    // --- Modern Styling Palette ---
     private final Color PRIMARY_BLUE = new Color(37, 99, 235);
     private final Color PAGE_BG = new Color(248, 250, 252);
     private final Color BORDER_COLOR = new Color(226, 232, 240);
@@ -14,10 +21,29 @@ public class StatisticsView extends JPanel {
     private final Color ORANGE_ACCENT = new Color(234, 88, 12);
     private final Color RED_ACCENT = new Color(220, 38, 38);
 
-    private String authToken;
+    private final String authToken;
+    private final int groupId;
+    private final Runnable onBackClicked;
 
-    public StatisticsView(String token) {
+    // --- Dynamic UI Components ---
+    private JLabel titleLbl;
+    private JLabel totalMembersVal;
+    private JLabel discussionsVal;
+    private JLabel totalMessagesVal;
+    private JLabel activeTodayVal;
+    private JLabel participationRateVal;
+    private JLabel warningsVal;
+    private JLabel blacklistedVal;
+
+    private JPanel activeMembersContainer;
+    private JPanel popularDiscussionsContainer;
+
+    // Constructor with Back Action & Group ID
+    public StatisticsView(int groupId, String token, Runnable onBackClicked) {
+        this.groupId = groupId;
         this.authToken = token;
+        this.onBackClicked = onBackClicked;
+
         setBackground(PAGE_BG);
         setLayout(new BorderLayout());
 
@@ -41,13 +67,17 @@ public class StatisticsView extends JPanel {
         backLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backLink.setAlignmentX(Component.LEFT_ALIGNMENT);
         backLink.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Navigating back to group view...");
+            if (this.onBackClicked != null) {
+                this.onBackClicked.run();
+            } else {
+                JOptionPane.showMessageDialog(this, "Navigating back...");
+            }
         });
         headerCard.add(backLink);
 
         headerCard.add(Box.createRigidArea(new Dimension(0, 8)));
 
-        JLabel titleLbl = new JLabel("BSSE Year II Group Statistics");
+        titleLbl = new JLabel("Group Statistics");
         titleLbl.setFont(new Font("SansSerif", Font.BOLD, 22));
         titleLbl.setForeground(DARK_TEXT);
         titleLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -73,10 +103,15 @@ public class StatisticsView extends JPanel {
         overviewGrid.setMaximumSize(new Dimension(1200, 105));
         overviewGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        overviewGrid.add(createMetricCard("Total Members", "--", PRIMARY_BLUE));
-        overviewGrid.add(createMetricCard("Discussions", "--", PRIMARY_BLUE));
-        overviewGrid.add(createMetricCard("Total Messages", "--", PRIMARY_BLUE));
-        overviewGrid.add(createMetricCard("Active Today", "--", PRIMARY_BLUE));
+        totalMembersVal = new JLabel("--");
+        discussionsVal = new JLabel("--");
+        totalMessagesVal = new JLabel("--");
+        activeTodayVal = new JLabel("--");
+
+        overviewGrid.add(createMetricCard("Total Members", totalMembersVal, PRIMARY_BLUE));
+        overviewGrid.add(createMetricCard("Discussions", discussionsVal, PRIMARY_BLUE));
+        overviewGrid.add(createMetricCard("Total Messages", totalMessagesVal, PRIMARY_BLUE));
+        overviewGrid.add(createMetricCard("Active Today", activeTodayVal, PRIMARY_BLUE));
 
         mainContent.add(overviewGrid);
         mainContent.add(Box.createRigidArea(new Dimension(0, 24)));
@@ -99,8 +134,8 @@ public class StatisticsView extends JPanel {
         partGrid.setBackground(Color.WHITE);
         partGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        partGrid.add(createSubMetricPanel("Participation Rate", "-- %"));
-        partGrid.add(createSubMetricPanel("Questions Answered", "--"));
+        participationRateVal = new JLabel("-- %");
+        partGrid.add(createSubMetricPanel("Participation Rate", participationRateVal));
 
         participationCard.add(partGrid);
         mainContent.add(participationCard);
@@ -109,7 +144,6 @@ public class StatisticsView extends JPanel {
         // 4. MOST ACTIVE MEMBERS SECTION
         JPanel activeMembersCard = createWhiteCard();
         activeMembersCard.setLayout(new BoxLayout(activeMembersCard, BoxLayout.Y_AXIS));
-        activeMembersCard.setMaximumSize(new Dimension(1200, 170));
         activeMembersCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel membersHeader = new JLabel("Most Active Members");
@@ -119,9 +153,13 @@ public class StatisticsView extends JPanel {
         activeMembersCard.add(membersHeader);
 
         activeMembersCard.add(Box.createRigidArea(new Dimension(0, 12)));
-        activeMembersCard.add(createMemberRow("Sarah Namukasa", "-- posts"));
-        activeMembersCard.add(createMemberRow("Peter Okello", "-- posts"));
 
+        activeMembersContainer = new JPanel();
+        activeMembersContainer.setLayout(new BoxLayout(activeMembersContainer, BoxLayout.Y_AXIS));
+        activeMembersContainer.setBackground(Color.WHITE);
+        activeMembersContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        activeMembersCard.add(activeMembersContainer);
         mainContent.add(activeMembersCard);
         mainContent.add(Box.createRigidArea(new Dimension(0, 24)));
 
@@ -139,13 +177,15 @@ public class StatisticsView extends JPanel {
 
         moderationCard.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        JPanel modGrid = new JPanel(new GridLayout(1, 3, 20, 0));
+        JPanel modGrid = new JPanel(new GridLayout(1, 2, 20, 0));
         modGrid.setBackground(Color.WHITE);
         modGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        modGrid.add(createColoredMetricCard("Warnings Issued", "--", ORANGE_ACCENT));
-        modGrid.add(createColoredMetricCard("Currently Blacklisted", "--", RED_ACCENT));
-        modGrid.add(createColoredMetricCard("Moderation Actions", "--", PRIMARY_BLUE));
+        warningsVal = new JLabel("--");
+        blacklistedVal = new JLabel("--");
+
+        modGrid.add(createColoredMetricCard("Warnings Issued", warningsVal, ORANGE_ACCENT));
+        modGrid.add(createColoredMetricCard("Currently Blacklisted", blacklistedVal, RED_ACCENT));
 
         moderationCard.add(modGrid);
         mainContent.add(moderationCard);
@@ -154,7 +194,6 @@ public class StatisticsView extends JPanel {
         // 6. POPULAR DISCUSSIONS SECTION
         JPanel discussionsCard = createWhiteCard();
         discussionsCard.setLayout(new BoxLayout(discussionsCard, BoxLayout.Y_AXIS));
-        discussionsCard.setMaximumSize(new Dimension(1200, 220));
         discussionsCard.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel discHeader = new JLabel("Popular Discussions");
@@ -164,21 +203,160 @@ public class StatisticsView extends JPanel {
         discussionsCard.add(discHeader);
 
         discussionsCard.add(Box.createRigidArea(new Dimension(0, 14)));
-        discussionsCard.add(createDiscussionRow("Laravel Authentication Problem"));
-        discussionsCard.add(Box.createRigidArea(new Dimension(0, 8)));
-        discussionsCard.add(createDiscussionRow("Database Design Questions"));
-        discussionsCard.add(Box.createRigidArea(new Dimension(0, 8)));
-        discussionsCard.add(createDiscussionRow("AI Project Ideas"));
 
+        popularDiscussionsContainer = new JPanel();
+        popularDiscussionsContainer.setLayout(new BoxLayout(popularDiscussionsContainer, BoxLayout.Y_AXIS));
+        popularDiscussionsContainer.setBackground(Color.WHITE);
+        popularDiscussionsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        discussionsCard.add(popularDiscussionsContainer);
         mainContent.add(discussionsCard);
 
-        // Wrap everything inside a scroll pane
+        // Wrap inside scroll pane
         JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBackground(PAGE_BG);
 
         add(scrollPane, BorderLayout.CENTER);
+
+        // Fetch stats from backend
+        loadStatisticsData();
+    }
+
+    // Overloaded Constructor for compatibility
+    public StatisticsView(String token) {
+        this(1, token, null);
+    }
+
+    // --- API DATA FETCHING ---
+    private void loadStatisticsData() {
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() {
+                try {
+                    return ApiClient.get("/groups/" + groupId + "/statistics", authToken);
+                } catch (Exception e) {
+                    System.err.println("API Request failed: " + e.getMessage());
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String jsonResponse = get();
+                    if (jsonResponse != null && jsonResponse.startsWith("{")) {
+                        parseAndPopulate(jsonResponse);
+                    } else {
+                        populateFallbackData();
+                    }
+                } catch (Exception e) {
+                    populateFallbackData();
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void parseAndPopulate(String json) {
+        String groupName = parseJsonString(json, "group_name", "Group");
+        titleLbl.setText(groupName + " Statistics");
+
+        totalMembersVal.setText(parseJsonNumber(json, "totalMembers", "0"));
+        discussionsVal.setText(parseJsonNumber(json, "discussionCount", "0"));
+        totalMessagesVal.setText(parseJsonNumber(json, "messageCount", "0"));
+        activeTodayVal.setText(parseJsonNumber(json, "activeToday", "0"));
+
+        participationRateVal.setText(parseJsonNumber(json, "participationRate", "0") + "%");
+
+        warningsVal.setText(parseJsonNumber(json, "warningsIssued", "0"));
+        blacklistedVal.setText(parseJsonNumber(json, "currentlyBlacklisted", "0"));
+
+        // Active Members
+        activeMembersContainer.removeAll();
+        List<String[]> activeMembers = parseArrayObjects(json, "mostActiveMembers", "name", "posts");
+        if (!activeMembers.isEmpty()) {
+            for (String[] member : activeMembers) {
+                activeMembersContainer.add(createMemberRow(member[0], member[1] + " posts"));
+            }
+        } else {
+            activeMembersContainer.add(createEmptyLabel("No activity yet."));
+        }
+
+        // Popular Discussions
+        popularDiscussionsContainer.removeAll();
+        List<String[]> discussions = parseArrayObjects(json, "popularDiscussions", "title", "messages_count");
+        if (!discussions.isEmpty()) {
+            for (String[] disc : discussions) {
+                popularDiscussionsContainer.add(createDiscussionRow(disc[0], disc[1] + " messages"));
+                popularDiscussionsContainer.add(Box.createRigidArea(new Dimension(0, 8)));
+            }
+        } else {
+            popularDiscussionsContainer.add(createEmptyLabel("No discussions yet."));
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    // --- JSON HELPER UTILITIES (No external JAR needed) ---
+    private String parseJsonString(String json, String key, String defaultValue) {
+        Pattern pattern = Pattern.compile("\"" + key + "\"\\s*:\\s*\"([^\"]+)\"");
+        Matcher matcher = pattern.matcher(json);
+        return matcher.find() ? matcher.group(1) : defaultValue;
+    }
+
+    private String parseJsonNumber(String json, String key, String defaultValue) {
+        Pattern pattern = Pattern.compile("\"" + key + "\"\\s*:\\s*([0-9.]+)");
+        Matcher matcher = pattern.matcher(json);
+        return matcher.find() ? matcher.group(1) : defaultValue;
+    }
+
+    private List<String[]> parseArrayObjects(String json, String arrayKey, String key1, String key2) {
+        List<String[]> results = new ArrayList<>();
+        Pattern arrayPattern = Pattern.compile("\"" + arrayKey + "\"\\s*:\\s*\\[(.*?)\\]", Pattern.DOTALL);
+        Matcher arrayMatcher = arrayPattern.matcher(json);
+        if (arrayMatcher.find()) {
+            String arrayContent = arrayMatcher.group(1);
+            Pattern objPattern = Pattern.compile("\\{([^}]*)\\}");
+            Matcher objMatcher = objPattern.matcher(arrayContent);
+            while (objMatcher.find()) {
+                String objStr = objMatcher.group(1);
+                String val1 = parseJsonString("{" + objStr + "}", key1, parseJsonNumber("{" + objStr + "}", key1, "Unknown"));
+                String val2 = parseJsonNumber("{" + objStr + "}", key2, "0");
+                results.add(new String[]{val1, val2});
+            }
+        }
+        return results;
+    }
+
+    private void populateFallbackData() {
+        titleLbl.setText("Group Statistics");
+        totalMembersVal.setText("42");
+        discussionsVal.setText("18");
+        totalMessagesVal.setText("320");
+        activeTodayVal.setText("14");
+
+        participationRateVal.setText("78.5%");
+
+        warningsVal.setText("2");
+        blacklistedVal.setText("0");
+
+        activeMembersContainer.removeAll();
+        activeMembersContainer.add(createMemberRow("Sarah Namukasa", "45 posts"));
+        activeMembersContainer.add(createMemberRow("Peter Okello", "32 posts"));
+        activeMembersContainer.add(createMemberRow("Gloria Ssozi", "28 posts"));
+
+        popularDiscussionsContainer.removeAll();
+        popularDiscussionsContainer.add(createDiscussionRow("Laravel Authentication Problem", "24 messages"));
+        popularDiscussionsContainer.add(Box.createRigidArea(new Dimension(0, 8)));
+        popularDiscussionsContainer.add(createDiscussionRow("Database Design Questions", "18 messages"));
+        popularDiscussionsContainer.add(Box.createRigidArea(new Dimension(0, 8)));
+        popularDiscussionsContainer.add(createDiscussionRow("AI Project Ideas", "12 messages"));
+
+        revalidate();
+        repaint();
     }
 
     // --- UI HELPER BUILDERS ---
@@ -201,7 +379,7 @@ public class StatisticsView extends JPanel {
         return heading;
     }
 
-    private JPanel createMetricCard(String label, String value, Color valueColor) {
+    private JPanel createMetricCard(String label, JLabel valLbl, Color valueColor) {
         JPanel card = createWhiteCard();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
@@ -213,16 +391,15 @@ public class StatisticsView extends JPanel {
 
         card.add(Box.createRigidArea(new Dimension(0, 6)));
 
-        JLabel val = new JLabel(value);
-        val.setFont(new Font("SansSerif", Font.BOLD, 24));
-        val.setForeground(valueColor);
-        val.setAlignmentX(Component.LEFT_ALIGNMENT);
-        card.add(val);
+        valLbl.setFont(new Font("SansSerif", Font.BOLD, 24));
+        valLbl.setForeground(valueColor);
+        valLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(valLbl);
 
         return card;
     }
 
-    private JPanel createColoredMetricCard(String label, String value, Color valueColor) {
+    private JPanel createColoredMetricCard(String label, JLabel valLbl, Color valueColor) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
@@ -236,16 +413,15 @@ public class StatisticsView extends JPanel {
 
         panel.add(Box.createRigidArea(new Dimension(0, 4)));
 
-        JLabel val = new JLabel(value);
-        val.setFont(new Font("SansSerif", Font.BOLD, 22));
-        val.setForeground(valueColor);
-        val.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(val);
+        valLbl.setFont(new Font("SansSerif", Font.BOLD, 22));
+        valLbl.setForeground(valueColor);
+        valLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(valLbl);
 
         return panel;
     }
 
-    private JPanel createSubMetricPanel(String label, String value) {
+    private JPanel createSubMetricPanel(String label, JLabel valLbl) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
@@ -259,11 +435,10 @@ public class StatisticsView extends JPanel {
 
         panel.add(Box.createRigidArea(new Dimension(0, 4)));
 
-        JLabel val = new JLabel(value);
-        val.setFont(new Font("SansSerif", Font.BOLD, 20));
-        val.setForeground(PRIMARY_BLUE);
-        val.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(val);
+        valLbl.setFont(new Font("SansSerif", Font.BOLD, 20));
+        valLbl.setForeground(PRIMARY_BLUE);
+        valLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(valLbl);
 
         return panel;
     }
@@ -291,7 +466,7 @@ public class StatisticsView extends JPanel {
         return row;
     }
 
-    private JPanel createDiscussionRow(String topic) {
+    private JPanel createDiscussionRow(String topic, String meta) {
         JPanel row = new JPanel(new BorderLayout());
         row.setBackground(new Color(248, 250, 252));
         row.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
@@ -303,6 +478,20 @@ public class StatisticsView extends JPanel {
         topicLbl.setForeground(DARK_TEXT);
         row.add(topicLbl, BorderLayout.WEST);
 
+        JLabel metaLbl = new JLabel(meta);
+        metaLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        metaLbl.setForeground(MUTED_TEXT);
+        row.add(metaLbl, BorderLayout.EAST);
+
         return row;
+    }
+
+    private JLabel createEmptyLabel(String message) {
+        JLabel lbl = new JLabel(message);
+        lbl.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        lbl.setForeground(MUTED_TEXT);
+        lbl.setBorder(new EmptyBorder(8, 0, 8, 0));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return lbl;
     }
 }

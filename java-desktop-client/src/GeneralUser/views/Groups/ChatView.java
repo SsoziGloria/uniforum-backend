@@ -1,29 +1,49 @@
 package GeneralUser.views.Groups;
 
+import GeneralUser.api.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatView extends JPanel {
 
+    // --- Styling Palette ---
     private final Color PRIMARY_BLUE = new Color(37, 99, 235);    // #2563EB
-    private final Color PAGE_BG = new Color(243, 244, 246);        // #F3F4F6
-    private final Color BORDER_COLOR = new Color(229, 231, 235);   // #E5E7EB
-    private final Color DARK_TEXT = new Color(31, 41, 55);         // #1F2937
-    private final Color MUTED_TEXT = new Color(107, 114, 128);     // #6B7280
+    private final Color PAGE_BG = new Color(248, 250, 252);       // #F8FAFC
+    private final Color BORDER_COLOR = new Color(226, 232, 240);  // #E2E8F0
+    private final Color DARK_TEXT = new Color(15, 23, 42);        // #0F172A
+    private final Color MUTED_TEXT = new Color(100, 116, 139);    // #64748B
+    private final Color CHAT_BG_OTHER = new Color(241, 245, 249);  // #F1F5F9
 
-    private String authToken;
-    private String currentUserName;
-    private int groupId;
-    private Integer topicId;
+    private final String authToken;
+    private final String currentUserName;
+    private final int groupId;
+    private final Integer topicId;
+    private final Consumer<Integer> onTopicSelectedCallback;
+
     private JPanel messageListPanel;
-    private JTextField messageInputField;
-    private Consumer<Integer> onTopicSelectedCallback;
+    private JTextArea messageInputField;
+    private JCheckBox restrictCheckBox;
+    private JPanel excludeMembersPanel;
+    private JPanel membersCheckboxContainer;
+    private JLabel connectionStatusLbl;
+
+    private final List<MemberModel> groupMembers = new ArrayList<>();
+    private final List<MessageModel> loadedMessages = new ArrayList<>();
+    private javax.swing.Timer pollingTimer;
+    private boolean isOnline = true;
 
     public ChatView(int groupId, Integer topicId, String groupName, String subTitle, String authToken, String currentUserName, Runnable onBackClicked, Consumer<Integer> onTopicSelectedCallback) {
         this.groupId = groupId;
@@ -47,29 +67,43 @@ public class ChatView extends JPanel {
         titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
         titlePanel.setBackground(Color.WHITE);
 
-        JLabel headingLbl = new JLabel(groupName);
+        JButton backLink = new JButton("← Back to Group");
+        backLink.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        backLink.setForeground(PRIMARY_BLUE);
+        backLink.setBorderPainted(false);
+        backLink.setContentAreaFilled(false);
+        backLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        backLink.setAlignmentX(Component.LEFT_ALIGNMENT);
+        backLink.addActionListener(e -> {
+            stopPolling();
+            if (onBackClicked != null) onBackClicked.run();
+        });
+        titlePanel.add(backLink);
+        titlePanel.add(Box.createRigidArea(new Dimension(0, 4)));
+
+        JLabel headingLbl = new JLabel(groupName + " Discussion Group Chat");
         headingLbl.setFont(new Font("SansSerif", Font.BOLD, 18));
         headingLbl.setForeground(DARK_TEXT);
+        headingLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         titlePanel.add(headingLbl);
 
-        JLabel subLbl = new JLabel(subTitle);
+        JLabel subLbl = new JLabel(subTitle != null ? subTitle : "Communicate with members of this group.");
         subLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
         subLbl.setForeground(MUTED_TEXT);
+        subLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         titlePanel.add(subLbl);
 
         topHeader.add(titlePanel, BorderLayout.WEST);
 
-        // Action Buttons (General Chat, Topic Discussions, Back)
+        // Connection status indicator + Topic switch
         JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionsPanel.setBackground(Color.WHITE);
 
-        JButton generalChatBtn = new JButton("General Chat");
-        generalChatBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
-        generalChatBtn.setForeground(Color.WHITE);
-        generalChatBtn.setBackground(PRIMARY_BLUE);
-        generalChatBtn.setFocusPainted(false);
-        generalChatBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+        connectionStatusLbl = new JLabel("● Online");
+        connectionStatusLbl.setFont(new Font("SansSerif", Font.BOLD, 11));
+        connectionStatusLbl.setForeground(new Color(16, 185, 129));
+        actionsPanel.add(connectionStatusLbl);
+
         JButton topicDiscussionsBtn = new JButton("Topic Discussions");
         topicDiscussionsBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
         topicDiscussionsBtn.setForeground(DARK_TEXT);
@@ -77,6 +111,7 @@ public class ChatView extends JPanel {
         topicDiscussionsBtn.setFocusPainted(false);
         topicDiscussionsBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         topicDiscussionsBtn.addActionListener(e -> {
+            stopPolling();
             loadGroupTopics(selectedTopicId -> {
                 if (onTopicSelectedCallback != null) {
                     onTopicSelectedCallback.accept(selectedTopicId);
@@ -84,126 +119,318 @@ public class ChatView extends JPanel {
             });
         });
 
-        JButton backBtn = new JButton("← Back");
-        backBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
-        backBtn.setForeground(DARK_TEXT);
-        backBtn.setBackground(Color.WHITE);
-        backBtn.setFocusPainted(false);
-        backBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        backBtn.addActionListener(e -> {
-            if (onBackClicked != null) onBackClicked.run();
-        });
-
-        actionsPanel.add(generalChatBtn);
         actionsPanel.add(topicDiscussionsBtn);
-        actionsPanel.add(backBtn);
-
         topHeader.add(actionsPanel, BorderLayout.EAST);
         add(topHeader, BorderLayout.NORTH);
 
-        // --- MESSAGE STREAM CONTAINER ---
+        // --- CENTER MAIN CONTENT (MESSAGES + INPUT) ---
+        JPanel mainContent = new JPanel();
+        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
+        mainContent.setBackground(PAGE_BG);
+        mainContent.setBorder(new EmptyBorder(16, 24, 16, 24));
+
+        // MESSAGES STREAM
         messageListPanel = new JPanel();
         messageListPanel.setLayout(new BoxLayout(messageListPanel, BoxLayout.Y_AXIS));
-        messageListPanel.setBackground(PAGE_BG);
-        messageListPanel.setBorder(new EmptyBorder(16, 24, 16, 24));
-        messageListPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        messageListPanel.setBackground(Color.WHITE);
+        messageListPanel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         JScrollPane scrollPane = new JScrollPane(
             messageListPanel,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
         );
-        scrollPane.setBorder(null);
+        scrollPane.setPreferredSize(new Dimension(800, 400));
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setWheelScrollingEnabled(true);
-        add(scrollPane, BorderLayout.CENTER);
 
-        // --- BOTTOM TYPING & SEND PANEL ---
-        JPanel bottomBar = new JPanel(new BorderLayout(12, 0));
-        bottomBar.setBackground(Color.WHITE);
-        bottomBar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_COLOR),
-            new EmptyBorder(16, 24, 16, 24)
+        mainContent.add(scrollPane);
+        mainContent.add(Box.createRigidArea(new Dimension(0, 16)));
+
+        // MESSAGE INPUT CARD
+        JPanel inputCard = new JPanel();
+        inputCard.setLayout(new BoxLayout(inputCard, BoxLayout.Y_AXIS));
+        inputCard.setBackground(Color.WHITE);
+        inputCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            new EmptyBorder(16, 16, 16, 16)
         ));
 
-        messageInputField = new JTextField();
-        messageInputField.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        messageInputField.addActionListener(e -> sendCurrentMessage());
-        bottomBar.add(messageInputField, BorderLayout.CENTER);
+        messageInputField = new JTextArea(3, 20);
+        messageInputField.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        messageInputField.setLineWrap(true);
+        messageInputField.setWrapStyleWord(true);
+        JScrollPane textScroll = new JScrollPane(messageInputField);
+        textScroll.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
 
-        JButton sendBtn = new JButton("Send");
+        inputCard.add(textScroll);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 12)));
+
+        // VISIBILITY CONTROLS (Restricted / Exclude Members)
+        JPanel visibilityPanel = new JPanel();
+        visibilityPanel.setLayout(new BoxLayout(visibilityPanel, BoxLayout.Y_AXIS));
+        visibilityPanel.setBackground(Color.WHITE);
+        visibilityPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel visTitle = new JLabel("Message Visibility");
+        visTitle.setFont(new Font("SansSerif", Font.BOLD, 13));
+        visTitle.setForeground(DARK_TEXT);
+        visibilityPanel.add(visTitle);
+
+        restrictCheckBox = new JCheckBox("Select members who should NOT see this message");
+        restrictCheckBox.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        restrictCheckBox.setBackground(Color.WHITE);
+        restrictCheckBox.setForeground(DARK_TEXT);
+        restrictCheckBox.addActionListener(e -> excludeMembersPanel.setVisible(restrictCheckBox.isSelected()));
+        visibilityPanel.add(restrictCheckBox);
+
+        excludeMembersPanel = new JPanel();
+        excludeMembersPanel.setLayout(new BoxLayout(excludeMembersPanel, BoxLayout.Y_AXIS));
+        excludeMembersPanel.setBackground(new Color(248, 250, 252));
+        excludeMembersPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            new EmptyBorder(10, 12, 10, 12)
+        ));
+        excludeMembersPanel.setVisible(false);
+
+        JLabel exTitle = new JLabel("Exclude Members:");
+        exTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        exTitle.setForeground(DARK_TEXT);
+        excludeMembersPanel.add(exTitle);
+        excludeMembersPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+
+        membersCheckboxContainer = new JPanel();
+        membersCheckboxContainer.setLayout(new BoxLayout(membersCheckboxContainer, BoxLayout.Y_AXIS));
+        membersCheckboxContainer.setBackground(new Color(248, 250, 252));
+        excludeMembersPanel.add(membersCheckboxContainer);
+
+        visibilityPanel.add(excludeMembersPanel);
+        inputCard.add(visibilityPanel);
+        inputCard.add(Box.createRigidArea(new Dimension(0, 12)));
+
+        // SEND BUTTON
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        buttonRow.setBackground(Color.WHITE);
+        JButton sendBtn = new JButton("Send Message");
         sendBtn.setFont(new Font("SansSerif", Font.BOLD, 13));
         sendBtn.setForeground(Color.WHITE);
         sendBtn.setBackground(PRIMARY_BLUE);
         sendBtn.setFocusPainted(false);
         sendBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         sendBtn.addActionListener(e -> sendCurrentMessage());
-        bottomBar.add(sendBtn, BorderLayout.EAST);
+        buttonRow.add(sendBtn);
 
-        add(bottomBar, BorderLayout.SOUTH);
+        inputCard.add(buttonRow);
+        mainContent.add(inputCard);
+
+        add(mainContent, BorderLayout.CENTER);
+
+        // Load cached messages first, sync offline queue, then poll backend
+        loadLocalCacheAndMembers();
+        syncPendingOfflineMessages();
+        startPolling();
     }
 
-    public void addMessageRow(String senderName, String messageText, String timestamp) {
-        boolean isMe = senderName.equalsIgnoreCase(currentUserName);
+    // --- DATA MODELLING ---
+    private static class MessageModel {
+        int id;
+        int senderId;
+        String senderName;
+        String text;
+        String timestamp;
+        boolean isMe;
 
-        JPanel rowWrapper = new JPanel(new BorderLayout());
-        rowWrapper.setOpaque(false);
-        rowWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        rowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-        rowWrapper.setBorder(new EmptyBorder(4, 0, 4, 0));
+        MessageModel(int id, int senderId, String senderName, String text, String timestamp, boolean isMe) {
+            this.id = id;
+            this.senderId = senderId;
+            this.senderName = senderName;
+            this.text = text;
+            this.timestamp = timestamp;
+            this.isMe = isMe;
+        }
+    }
 
-        JPanel bubble = new JPanel();
-        bubble.setLayout(new BoxLayout(bubble, BoxLayout.Y_AXIS));
-        bubble.setOpaque(true);
-        bubble.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
-        if (isMe) {
-            bubble.setBackground(PRIMARY_BLUE);
-            bubble.setBorder(new EmptyBorder(10, 14, 10, 14));
-            rowWrapper.add(bubble, BorderLayout.EAST);
+    private static class MemberModel {
+        int userId;
+        String name;
+        String role;
+        JCheckBox checkBox;
+
+        MemberModel(int userId, String name, String role) {
+            this.userId = userId;
+            this.name = name;
+            this.role = role;
+        }
+    }
+
+    // --- RENDER MESSAGES ---
+    private void renderMessages() {
+        messageListPanel.removeAll();
+
+        if (loadedMessages.isEmpty()) {
+            JPanel emptyPanel = new JPanel();
+            emptyPanel.setLayout(new BoxLayout(emptyPanel, BoxLayout.Y_AXIS));
+            emptyPanel.setBackground(Color.WHITE);
+            emptyPanel.setBorder(new EmptyBorder(60, 0, 60, 0));
+
+            JLabel iconLbl = new JLabel("💬");
+            iconLbl.setFont(new Font("SansSerif", Font.PLAIN, 36));
+            iconLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JLabel titleLbl = new JLabel("No messages yet");
+            titleLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
+            titleLbl.setForeground(DARK_TEXT);
+            titleLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JLabel subLbl = new JLabel("Start the conversation with your group members.");
+            subLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            subLbl.setForeground(MUTED_TEXT);
+            subLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            emptyPanel.add(iconLbl);
+            emptyPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+            emptyPanel.add(titleLbl);
+            emptyPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+            emptyPanel.add(subLbl);
+
+            messageListPanel.add(emptyPanel);
         } else {
-            bubble.setBackground(Color.WHITE);
-            bubble.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_COLOR, 1),
-                new EmptyBorder(10, 14, 10, 14)
-            ));
-            rowWrapper.add(bubble, BorderLayout.WEST);
+            for (MessageModel msg : loadedMessages) {
+                messageListPanel.add(createSingleMessageRow(msg));
+                messageListPanel.add(Box.createRigidArea(new Dimension(0, 12)));
+            }
         }
 
-        JLabel senderLbl = new JLabel(senderName);
-        senderLbl.setFont(new Font("SansSerif", Font.BOLD, 11));
-        senderLbl.setForeground(isMe ? new Color(219, 234, 254) : MUTED_TEXT);
-        senderLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bubble.add(senderLbl);
-
-        bubble.add(Box.createRigidArea(new Dimension(0, 4)));
-
-        JLabel textLbl = new JLabel(messageText);
-        textLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        textLbl.setForeground(isMe ? Color.WHITE : DARK_TEXT);
-        textLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bubble.add(textLbl);
-
-        bubble.add(Box.createRigidArea(new Dimension(0, 4)));
-
-        JLabel timeLbl = new JLabel(timestamp);
-        timeLbl.setFont(new Font("SansSerif", Font.ITALIC, 9));
-        timeLbl.setForeground(isMe ? new Color(191, 219, 254) : MUTED_TEXT);
-        timeLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bubble.add(timeLbl);
-
-        messageListPanel.add(rowWrapper);
         messageListPanel.revalidate();
         messageListPanel.repaint();
     }
 
-   private void sendCurrentMessage() {
+    private JPanel createSingleMessageRow(MessageModel msg) {
+        JPanel rowWrapper = new JPanel(new BorderLayout());
+        rowWrapper.setOpaque(false);
+        rowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        if (msg.isMe) {
+            // OWN MESSAGE (RIGHT SIDE)
+            JPanel rightContainer = new JPanel();
+            rightContainer.setLayout(new BoxLayout(rightContainer, BoxLayout.Y_AXIS));
+            rightContainer.setOpaque(false);
+
+            JPanel bubble = new JPanel(new BorderLayout());
+            bubble.setBackground(PRIMARY_BLUE);
+            bubble.setBorder(new EmptyBorder(12, 14, 12, 14));
+
+            JLabel textLbl = new JLabel("<html><body style='width: 320px; color: white;'>" + escapeHtml(msg.text) + "</body></html>");
+            textLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            bubble.add(textLbl, BorderLayout.CENTER);
+
+            JPanel subRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 2));
+            subRow.setOpaque(false);
+
+            JLabel timeLbl = new JLabel(msg.timestamp);
+            timeLbl.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            timeLbl.setForeground(new Color(226, 232, 240));
+
+            JButton deleteBtn = new JButton("Delete");
+            deleteBtn.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            deleteBtn.setForeground(new Color(254, 202, 202));
+            deleteBtn.setBorderPainted(false);
+            deleteBtn.setContentAreaFilled(false);
+            deleteBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            deleteBtn.addActionListener(e -> deleteMessage(msg));
+
+            subRow.add(timeLbl);
+            subRow.add(deleteBtn);
+
+            rightContainer.add(bubble);
+            rightContainer.add(subRow);
+
+            rowWrapper.add(rightContainer, BorderLayout.EAST);
+        } else {
+            // OTHER MEMBER MESSAGE (LEFT SIDE)
+            JPanel leftContainer = new JPanel(new BorderLayout(10, 0));
+            leftContainer.setOpaque(false);
+
+            // Avatar initial circle
+            String initial = msg.senderName != null && !msg.senderName.isEmpty() ? msg.senderName.substring(0, 1).toUpperCase() : "U";
+            JLabel avatarLbl = new JLabel(initial, SwingConstants.CENTER);
+            avatarLbl.setPreferredSize(new Dimension(36, 36));
+            avatarLbl.setOpaque(true);
+            avatarLbl.setBackground(PRIMARY_BLUE);
+            avatarLbl.setForeground(Color.WHITE);
+            avatarLbl.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+            JPanel messageBody = new JPanel();
+            messageBody.setLayout(new BoxLayout(messageBody, BoxLayout.Y_AXIS));
+            messageBody.setOpaque(false);
+
+            JPanel senderMeta = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            senderMeta.setOpaque(false);
+
+            JLabel nameLbl = new JLabel(msg.senderName);
+            nameLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
+            nameLbl.setForeground(DARK_TEXT);
+
+            JLabel timeLbl = new JLabel(msg.timestamp);
+            timeLbl.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            timeLbl.setForeground(MUTED_TEXT);
+
+            senderMeta.add(nameLbl);
+            senderMeta.add(timeLbl);
+
+            JPanel bubble = new JPanel(new BorderLayout());
+            bubble.setBackground(CHAT_BG_OTHER);
+            bubble.setBorder(new EmptyBorder(12, 14, 12, 14));
+
+            JLabel textLbl = new JLabel("<html><body style='width: 320px; color: #0F172A;'>" + escapeHtml(msg.text) + "</body></html>");
+            textLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            bubble.add(textLbl, BorderLayout.CENTER);
+
+            messageBody.add(senderMeta);
+            messageBody.add(Box.createRigidArea(new Dimension(0, 4)));
+            messageBody.add(bubble);
+
+            leftContainer.add(avatarLbl, BorderLayout.WEST);
+            leftContainer.add(messageBody, BorderLayout.CENTER);
+
+            rowWrapper.add(leftContainer, BorderLayout.WEST);
+        }
+
+        return rowWrapper;
+    }
+
+    // --- SEND MESSAGE & EXCLUDE LOGIC ---
+    private void sendCurrentMessage() {
         String text = messageInputField.getText().trim();
         if (text.isEmpty()) return;
 
-        addMessageRow(currentUserName, text, "Just now");
-        messageInputField.setText("");
+        List<Integer> excludedIds = new ArrayList<>();
+        if (restrictCheckBox.isSelected()) {
+            for (MemberModel m : groupMembers) {
+                if (m.checkBox != null && m.checkBox.isSelected()) {
+                    excludedIds.add(m.userId);
+                }
+            }
+        }
 
+        MessageModel newMsg = new MessageModel(
+            (int) (System.currentTimeMillis() % 1000000),
+            -1,
+            currentUserName,
+            text,
+            "Just now",
+            true
+        );
+
+        loadedMessages.add(newMsg);
+        renderMessages();
+        messageInputField.setText("");
+        restrictCheckBox.setSelected(false);
+        excludeMembersPanel.setVisible(false);
+
+        saveLocalCache();
+
+        // Dispatch via Thread
         new Thread(() -> {
             try {
                 URL url = new URL("http://127.0.0.1:8000/api/groups/" + groupId + "/messages");
@@ -214,149 +441,306 @@ public class ChatView extends JPanel {
                 conn.setRequestProperty("Accept", "application/json");
                 conn.setDoOutput(true);
 
-                // Matches backend validation: null for general chat, integer topic_id if inside a topic stream
-                String jsonInputString = "{\"msg_txt\": \"" + text + "\"}";
+                StringBuilder json = new StringBuilder();
+                json.append("{");
+                json.append("\"msg_txt\":\"").append(escapeJson(text)).append("\"");
                 if (topicId != null) {
-                    jsonInputString = "{\"msg_txt\": \"" + text + "\", \"topic_id\": " + topicId + "}";
+                    json.append(",\"topic_id\":").append(topicId);
                 }
+                if (!excludedIds.isEmpty()) {
+                    json.append(",\"is_restricted\":1");
+                    json.append(",\"excluded_user_ids\":").append(excludedIds.toString());
+                }
+                json.append("}");
 
                 try (OutputStream os = conn.getOutputStream()) {
-                    byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
+                    os.write(json.toString().getBytes(StandardCharsets.UTF_8));
                 }
 
-                int responseCode = conn.getResponseCode();
-                if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_CREATED) {
-                    System.err.println("Failed to post message to API. Response code: " + responseCode);
+                int code = conn.getResponseCode();
+                if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_CREATED) {
+                    updateConnectionStatus(true);
+                } else {
+                    queuePendingOfflineMessage(text, excludedIds);
+                    updateConnectionStatus(false);
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                queuePendingOfflineMessage(text, excludedIds);
+                updateConnectionStatus(false);
             }
         }).start();
     }
 
-    public void loadGroupTopics(java.util.function.Consumer<Integer> onTopicSelected) {
+    private void deleteMessage(MessageModel msg) {
+        int confirm = JOptionPane.showConfirmDialog(this, "Delete this message?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        loadedMessages.remove(msg);
+        renderMessages();
+        saveLocalCache();
+
+        new Thread(() -> {
+            try {
+                ApiClient.post("/groups/" + groupId + "/messages/" + msg.id + "/delete", "{}", authToken);
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    // --- REALTIME POLLING & NETWORK SYNC ---
+    private void startPolling() {
+        pollingTimer = new javax.swing.Timer(4000, e -> fetchRemoteMessages());
+        pollingTimer.start();
+    }
+
+    private void stopPolling() {
+        if (pollingTimer != null) {
+            pollingTimer.stop();
+        }
+    }
+
+    private void fetchRemoteMessages() {
+        new Thread(() -> {
+            try {
+                String endpoint = "/groups/" + groupId + "/messages" + (topicId != null ? "?topic_id=" + topicId : "");
+                String json = ApiClient.get(endpoint, authToken);
+
+                if (json != null && json.startsWith("{")) {
+                    parseAndMergeMessages(json);
+                    updateConnectionStatus(true);
+                    syncPendingOfflineMessages();
+                } else {
+                    updateConnectionStatus(false);
+                }
+            } catch (Exception e) {
+                updateConnectionStatus(false);
+            }
+        }).start();
+    }
+
+    private void parseAndMergeMessages(String json) {
+        Pattern pattern = Pattern.compile("\"msg_id\":\\s*(\\d+).*?\"msg_txt\":\\s*\"([^\"]+)\".*?\"sender_name\":\\s*\"([^\"]+)\"", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(json);
+
+        boolean updated = false;
+        while (matcher.find()) {
+            int id = Integer.parseInt(matcher.group(1));
+            String text = matcher.group(2);
+            String sender = matcher.group(3);
+
+            boolean exists = false;
+            for (MessageModel m : loadedMessages) {
+                if (m.id == id) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                loadedMessages.add(new MessageModel(id, -1, sender, text, "Recently", sender.equalsIgnoreCase(currentUserName)));
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            saveLocalCache();
+            SwingUtilities.invokeLater(this::renderMessages);
+        }
+    }
+
+    // --- OFFLINE QUEUE & CACHE SYSTEM ---
+    private String getCacheFilename() {
+        return "cached_chat_group_" + groupId + ".json";
+    }
+
+    private String getPendingQueueFilename() {
+        return "pending_messages_group_" + groupId + ".json";
+    }
+
+    private void saveLocalCache() {
+        try (PrintWriter out = new PrintWriter(new FileWriter(getCacheFilename()))) {
+            out.print("[");
+            for (int i = 0; i < loadedMessages.size(); i++) {
+                MessageModel m = loadedMessages.get(i);
+                out.print("{\"id\":" + m.id + ",\"sender\":\"" + escapeJson(m.senderName) + "\",\"text\":\"" + escapeJson(m.text) + "\",\"time\":\"" + escapeJson(m.timestamp) + "\",\"isMe\":" + m.isMe + "}");
+                if (i < loadedMessages.size() - 1) out.print(",");
+            }
+            out.print("]");
+        } catch (Exception ignored) {}
+    }
+
+    private void loadLocalCacheAndMembers() {
+        // 1. Members checklist
+        fetchGroupMembers();
+
+        // 2. Chat history from disk
+        File cacheFile = new File(getCacheFilename());
+        if (cacheFile.exists()) {
+            try {
+                String content = new String(Files.readAllBytes(Paths.get(getCacheFilename())));
+                Pattern pattern = Pattern.compile("\\{\"id\":(\\d+),\"sender\":\"([^\"]+)\",\"text\":\"([^\"]+)\",\"time\":\"([^\"]+)\",\"isMe\":(true|false)\\}");
+                Matcher matcher = pattern.matcher(content);
+
+                loadedMessages.clear();
+                while (matcher.find()) {
+                    loadedMessages.add(new MessageModel(
+                        Integer.parseInt(matcher.group(1)),
+                        -1,
+                        matcher.group(2),
+                        matcher.group(3),
+                        matcher.group(4),
+                        Boolean.parseBoolean(matcher.group(5))
+                    ));
+                }
+                renderMessages();
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private void fetchGroupMembers() {
+        new Thread(() -> {
+            try {
+                String response = ApiClient.get("/groups/" + groupId + "/members", authToken);
+                if (response != null && response.contains("members")) {
+                    Pattern p = Pattern.compile("\"id\":(\\d+).*?\"name\":\"([^\"]+)\".*?\"group_role\":\"([^\"]+)\"");
+                    Matcher m = p.matcher(response);
+
+                    groupMembers.clear();
+                    while (m.find()) {
+                        groupMembers.add(new MemberModel(Integer.parseInt(m.group(1)), m.group(2), m.group(3)));
+                    }
+
+                    SwingUtilities.invokeLater(() -> {
+                        membersCheckboxContainer.removeAll();
+                        for (MemberModel mem : groupMembers) {
+                            if (!mem.name.equalsIgnoreCase(currentUserName)) {
+                                mem.checkBox = new JCheckBox(mem.name + " (" + mem.role + ")");
+                                mem.checkBox.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                                mem.checkBox.setBackground(new Color(248, 250, 252));
+                                membersCheckboxContainer.add(mem.checkBox);
+                            }
+                        }
+                        membersCheckboxContainer.revalidate();
+                        membersCheckboxContainer.repaint();
+                    });
+                }
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    private void queuePendingOfflineMessage(String text, List<Integer> excludedIds) {
+        try (PrintWriter out = new PrintWriter(new FileWriter(getPendingQueueFilename(), true))) {
+            out.println(escapeJson(text) + "||" + excludedIds.toString());
+        } catch (Exception ignored) {}
+    }
+
+    private void syncPendingOfflineMessages() {
+        File pendingFile = new File(getPendingQueueFilename());
+        if (!pendingFile.exists()) return;
+
+        new Thread(() -> {
+            try (BufferedReader br = new BufferedReader(new FileReader(pendingFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split("\\|\\|");
+                    if (parts.length > 0) {
+                        String text = parts[0];
+                        URL url = new URL("http://127.0.0.1:8000/api/groups/" + groupId + "/messages");
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("POST");
+                        conn.setRequestProperty("Authorization", "Bearer " + authToken);
+                        conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                        conn.setDoOutput(true);
+
+                        String json = "{\"msg_txt\":\"" + text + "\"}";
+                        try (OutputStream os = conn.getOutputStream()) {
+                            os.write(json.getBytes(StandardCharsets.UTF_8));
+                        }
+                        conn.getResponseCode();
+                    }
+                }
+                pendingFile.delete(); // Clear queue after sync
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    private void updateConnectionStatus(boolean online) {
+        this.isOnline = online;
+        SwingUtilities.invokeLater(() -> {
+            if (online) {
+                connectionStatusLbl.setText("● Online");
+                connectionStatusLbl.setForeground(new Color(16, 185, 129));
+            } else {
+                connectionStatusLbl.setText("● Offline (Cached)");
+                connectionStatusLbl.setForeground(new Color(239, 68, 68));
+            }
+        });
+    }
+
+    // --- TOPIC DISCUSSIONS FALLBACK ---
+    public void loadGroupTopics(Consumer<Integer> onTopicSelected) {
         messageListPanel.removeAll();
         messageListPanel.revalidate();
         messageListPanel.repaint();
 
         new Thread(() -> {
             try {
-                String response = GeneralUser.api.ApiClient.get("/groups/" + groupId + "/topics", authToken);
-                
-                int splitIndex = response.indexOf(":");
-                String responseStr = (splitIndex != -1) ? response.substring(splitIndex + 1) : response;
-
+                String response = ApiClient.get("/groups/" + groupId + "/topics", authToken);
                 SwingUtilities.invokeLater(() -> {
                     messageListPanel.removeAll();
-                    
-                    if (!responseStr.contains("\"data\":[]") && responseStr.contains("title")) {
-                        String[] items = responseStr.split("\\},\\s*\\{");
-                        
-                        for (String item : items) {
-                            int id = 0;
-                            try {
-                                int idIdx = item.indexOf("\"id\":");
-                                if (idIdx == -1) idIdx = item.indexOf("\"topic_id\":");
-                                if (idIdx != -1) {
-                                    int start = idIdx + 5;
-                                    while (start < item.length() && (item.charAt(start) == ' ' || item.charAt(start) == '"')) {
-                                        start++;
-                                    }
-                                    int end = start;
-                                    while (end < item.length() && Character.isDigit(item.charAt(end))) {
-                                        end++;
-                                    }
-                                    if (end > start) {
-                                        id = Integer.parseInt(item.substring(start, end));
-                                    }
-                                }
-                            } catch (Exception ignored) {}
+                    if (response != null && response.contains("title")) {
+                        Pattern p = Pattern.compile("\"id\":(\\d+).*?\"title\":\"([^\"]+)\".*?\"description\":\"([^\"]+)\"");
+                        Matcher m = p.matcher(response);
 
-                            String title = "Discussion Topic";
-                            try {
-                                int titleIdx = item.indexOf("\"title\":\"");
-                                if (titleIdx != -1) {
-                                    int start = titleIdx + 9;
-                                    int end = item.indexOf("\"", start);
-                                    title = item.substring(start, end);
-                                }
-                            } catch (Exception ignored) {}
+                        while (m.find()) {
+                            int tId = Integer.parseInt(m.group(1));
+                            String title = m.group(2);
+                            String desc = m.group(3);
 
-                            String description = "Click to view discussion details.";
-                            try {
-                                int descIdx = item.indexOf("\"description\":\"");
-                                if (descIdx != -1) {
-                                    int start = descIdx + 15;
-                                    int end = item.indexOf("\"", start);
-                                    description = item.substring(start, end);
-                                }
-                            } catch (Exception ignored) {}
+                            JPanel row = new JPanel(new BorderLayout());
+                            row.setBackground(Color.WHITE);
+                            row.setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                                new EmptyBorder(12, 14, 12, 14)
+                            ));
+                            row.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-                            final int topicIdFinal = id;
-                            JPanel row = createTopicRowItem(topicIdFinal, title, description, onTopicSelected);
+                            JLabel titleLbl = new JLabel(title);
+                            titleLbl.setFont(new Font("SansSerif", Font.BOLD, 13));
+                            titleLbl.setForeground(PRIMARY_BLUE);
+
+                            JLabel descLbl = new JLabel(desc);
+                            descLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+                            descLbl.setForeground(MUTED_TEXT);
+
+                            row.add(titleLbl, BorderLayout.NORTH);
+                            row.add(descLbl, BorderLayout.CENTER);
+
+                            row.addMouseListener(new java.awt.event.MouseAdapter() {
+                                @Override
+                                public void mouseClicked(java.awt.event.MouseEvent e) {
+                                    if (onTopicSelected != null) onTopicSelected.accept(tId);
+                                }
+                            });
+
                             messageListPanel.add(row);
-                            messageListPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+                            messageListPanel.add(Box.createRigidArea(new Dimension(0, 8)));
                         }
-                    } else {
-                        JLabel emptyLbl = new JLabel("No discussions found for this group yet.");
-                        emptyLbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
-                        emptyLbl.setForeground(MUTED_TEXT);
-                        messageListPanel.add(emptyLbl);
                     }
-
                     messageListPanel.revalidate();
                     messageListPanel.repaint();
                 });
-            } catch (Exception ex) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, "Error loading topics: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                });
-            }
+            } catch (Exception ignored) {}
         }).start();
     }
 
-    private JPanel createTopicRowItem(int topicId, String title, String description, java.util.function.Consumer<Integer> onTopicSelected) {
-        JPanel row = new JPanel();
-        row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
-        row.setBackground(Color.WHITE);
-        row.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(BORDER_COLOR, 1),
-            new EmptyBorder(14, 16, 14, 16)
-        ));
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 85));
-        row.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    // --- HELPER UTILITIES ---
+    private String escapeHtml(String input) {
+        if (input == null) return "";
+        return input.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>");
+    }
 
-        JLabel titleLbl = new JLabel(title);
-        titleLbl.setFont(new Font("SansSerif", Font.BOLD, 14));
-        titleLbl.setForeground(PRIMARY_BLUE);
-        row.add(titleLbl);
-
-        row.add(Box.createRigidArea(new Dimension(0, 4)));
-
-        JLabel descLbl = new JLabel(description);
-        descLbl.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        descLbl.setForeground(MUTED_TEXT);
-        row.add(descLbl);
-
-        row.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (onTopicSelected != null) {
-                    onTopicSelected.accept(topicId);
-                }
-            }
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                row.setBackground(new Color(239, 246, 255));
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                row.setBackground(Color.WHITE);
-            }
-        });
-
-        return row;
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
     }
 }

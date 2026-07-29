@@ -1,238 +1,377 @@
 package GeneralUser.views;
 
-import GeneralUser.views.LoginForm;
-import GeneralUser.views.RegisterForm;
-
-// ... rest of your imports and class code
-
 import javax.swing.*;
-
 import java.awt.*;
 
 public class WelcomeFrame extends JFrame {
 
-    // --- DESIGN CONSTANTS  ---
-    private final Color PRIMARY_BLUE = new Color(37, 99, 235);   // Exact web primary blue (#1D4ED8)
-    private final Color LIGHT_BLUE_BG = new Color(239, 246, 255);  // Soft accent tint (#EFF6FF)
-    private final Color DARK_TEXT = new Color(15, 23, 42);         // Main heading text color
-    private final Color MUTED_TEXT = new Color(100, 116, 139);     // Description paragraph color
-    private final Color PAGE_BG = new Color(248, 250, 252);        // Background canvas color
+    // --- COLOR PALETTE ---
+    private final Color PRIMARY_BLUE = new Color(37, 99, 235);     // #2563EB
+    private final Color LIGHT_BLUE_BG = new Color(239, 246, 255);  // #EFF6FF
+    private final Color BORDER_COLOR = new Color(226, 232, 240);   // #E2E8F0
+    private final Color DARK_TEXT = new Color(15, 23, 42);         // #0F172A
+    private final Color MUTED_TEXT = new Color(100, 116, 139);     // #64748B
+    private final Color PAGE_BG = new Color(248, 250, 252);        // #F8FAFC
 
     public WelcomeFrame() {
         setTitle("UniForum — Where University Minds Connect");
-        setSize(1100, 700);
+        setSize(1150, 750);
+        setMinimumSize(new Dimension(900, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
 
-        // --- 1. TOP NAVIGATION BAR ---
-        JPanel navPanel = new JPanel(new BorderLayout());
-        navPanel.setBackground(Color.WHITE);
-        navPanel.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
+        // System font antialiasing for clean text rendering
+        System.setProperty("awt.useSystemAAFontSettings", "lcd");
+        System.setProperty("swing.aatext", "true");
 
-        JLabel brandLabel = new JLabel("UniForum");
-        brandLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-        brandLabel.setForeground(PRIMARY_BLUE);
-        navPanel.add(brandLabel, BorderLayout.WEST);
+        // Main background panel with full-page scroll capability
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBackground(PAGE_BG);
 
-        // Top right action links
-        JPanel navRightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        navRightPanel.setBackground(Color.WHITE);
-        
-        JButton navSignIn = new JButton("Sign In");
-        navSignIn.setFont(new Font("SansSerif", Font.BOLD, 12));
-        navSignIn.setForeground(DARK_TEXT);
-        navSignIn.setContentAreaFilled(false);
-        navSignIn.setBorderPainted(false);
+        JPanel contentContainer = new JPanel();
+        contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
+        contentContainer.setBackground(PAGE_BG);
+        contentContainer.setBorder(BorderFactory.createEmptyBorder(28, 48, 36, 48));
 
-        JButton navGetStarted = new JButton("Get Started");
-        navGetStarted.setFont(new Font("SansSerif", Font.BOLD, 12));
-        navGetStarted.setBackground(PRIMARY_BLUE);
-        navGetStarted.setForeground(Color.WHITE);
-        navGetStarted.setFocusPainted(false);
-        navGetStarted.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        // Add UI sections
+        contentContainer.add(createHeaderBar());
+        contentContainer.add(Box.createRigidArea(new Dimension(0, 28)));
+        contentContainer.add(createHeroSection());
+        contentContainer.add(Box.createRigidArea(new Dimension(0, 28)));
+        contentContainer.add(createFeaturesGridSection());
+        contentContainer.add(Box.createRigidArea(new Dimension(0, 28)));
+        contentContainer.add(createCallToActionCard());
 
-        navRightPanel.add(navSignIn);
-        navRightPanel.add(navGetStarted);
-        navPanel.add(navRightPanel, BorderLayout.EAST);
+        JScrollPane scrollPane = new JScrollPane(contentContainer);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
 
-        add(navPanel, BorderLayout.NORTH);
+        add(outerPanel);
+    }
 
-        // --- 2. HERO SECTION (Split 2 Columns: Left Text, Right Mockup Card) ---
-        JPanel heroPanel = new JPanel(new GridLayout(1, 2, 40, 0));
-        heroPanel.setBackground(PAGE_BG);
-        heroPanel.setBorder(BorderFactory.createEmptyBorder(40, 50, 40, 50));
+    // --- 1. TOP HEADER ---
+    private JPanel createHeaderBar() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // --- LEFT CONTENT PANEL ---
+        // Logo
+        JLabel logo = new JLabel("🎓 UniForum");
+        logo.setFont(new Font("SansSerif", Font.BOLD, 22));
+        logo.setForeground(PRIMARY_BLUE);
+        header.add(logo, BorderLayout.WEST);
+
+        // Actions
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        actionPanel.setOpaque(false);
+
+        JButton signInBtn = createOutlineButton("Sign In");
+        signInBtn.addActionListener(e -> {
+            new LoginForm().setVisible(true);
+            dispose();
+        });
+
+        JButton registerBtn = createPrimaryButton("Get Started");
+        registerBtn.addActionListener(e -> {
+            new RegisterForm().setVisible(true);
+            dispose();
+        });
+
+        actionPanel.add(signInBtn);
+        actionPanel.add(registerBtn);
+        header.add(actionPanel, BorderLayout.EAST);
+
+        return header;
+    }
+
+    // --- 2. HERO SECTION ---
+    private JPanel createHeroSection() {
+        JPanel hero = new JPanel(new GridBagLayout());
+        hero.setOpaque(false);
+        hero.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+
+        // Left Content Column
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-        leftPanel.setBackground(PAGE_BG);
+        leftPanel.setOpaque(false);
 
-        // AI Badge
-        JLabel badgeLabel = new JLabel("  Now with AI-powered learning insights  ");
-        badgeLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
-        badgeLabel.setForeground(PRIMARY_BLUE);
-        badgeLabel.setBackground(LIGHT_BLUE_BG);
-        badgeLabel.setOpaque(true);
-        badgeLabel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
-        badgeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leftPanel.add(badgeLabel);
+        RoundedPanel badge = new RoundedPanel(12, LIGHT_BLUE_BG, new Color(191, 219, 254));
+        badge.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        badge.setMaximumSize(new Dimension(280, 28));
+        badge.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JLabel badgeText = new JLabel("⭐  AI-Powered Academic Collaboration");
+        badgeText.setFont(new Font("SansSerif", Font.BOLD, 11));
+        badgeText.setForeground(PRIMARY_BLUE);
+        badge.add(badgeText);
+        leftPanel.add(badge);
+
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 16)));
+
+        JLabel title1 = new JLabel("Where university");
+        title1.setFont(new Font("SansSerif", Font.BOLD, 32));
+        title1.setForeground(DARK_TEXT);
+        title1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.add(title1);
+
+        JLabel title2 = new JLabel("minds connect");
+        title2.setFont(new Font("SansSerif", Font.BOLD, 32));
+        title2.setForeground(PRIMARY_BLUE);
+        title2.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.add(title2);
+
+        JLabel title3 = new JLabel("and grow together.");
+        title3.setFont(new Font("SansSerif", Font.BOLD, 32));
+        title3.setForeground(DARK_TEXT);
+        title3.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.add(title3);
+
+        leftPanel.add(Box.createRigidArea(new Dimension(0, 14)));
+
+        JLabel subtitle = new JLabel("<html><body style='width:380px;'>A collaborative platform built for students and lecturers, powered by AI to keep every conversation meaningful.</body></html>");
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        subtitle.setForeground(MUTED_TEXT);
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        leftPanel.add(subtitle);
 
         leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Main Headings
-        JLabel titleLabel1 = new JLabel("Where university");
-        titleLabel1.setFont(new Font("SansSerif", Font.BOLD, 36));
-        titleLabel1.setForeground(DARK_TEXT);
-        titleLabel1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leftPanel.add(titleLabel1);
+        JPanel heroBtnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        heroBtnRow.setOpaque(false);
+        heroBtnRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel titleLabel2 = new JLabel("minds connect");
-        titleLabel2.setFont(new Font("SansSerif", Font.BOLD, 36));
-        titleLabel2.setForeground(PRIMARY_BLUE);
-        titleLabel2.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leftPanel.add(titleLabel2);
+        JButton startBtn = createPrimaryButton("Get Started →");
+        startBtn.addActionListener(e -> {
+            new RegisterForm().setVisible(true);
+            dispose();
+        });
 
-        JLabel titleLabel3 = new JLabel("and grow together.");
-        titleLabel3.setFont(new Font("SansSerif", Font.BOLD, 36));
-        titleLabel3.setForeground(DARK_TEXT);
-        titleLabel3.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leftPanel.add(titleLabel3);
+        JButton loginBtn = createOutlineButton("Sign In");
+        loginBtn.addActionListener(e -> {
+            new LoginForm().setVisible(true);
+            dispose();
+        });
 
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        heroBtnRow.add(startBtn);
+        heroBtnRow.add(loginBtn);
+        leftPanel.add(heroBtnRow);
 
-        // Description Paragraph
-        JTextArea descArea = new JTextArea("A collaborative discussion platform built for students, lecturers, and administrators, powered by AI to keep every conversation meaningful.");
-        descArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        descArea.setForeground(MUTED_TEXT);
-        descArea.setBackground(PAGE_BG);
-        descArea.setLineWrap(true);
-        descArea.setWrapStyleWord(true);
-        descArea.setEditable(false);
-        descArea.setMaximumSize(new Dimension(480, 70));
-        descArea.setAlignmentX(Component.LEFT_ALIGNMENT);
-        leftPanel.add(descArea);
+        gbc.gridx = 0;
+        gbc.weightx = 0.5;
+        gbc.insets = new Insets(0, 0, 0, 16);
+        hero.add(leftPanel, gbc);
 
-        leftPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+        // Right Mockup Card Column
+        RoundedPanel rightCard = new RoundedPanel(18, Color.WHITE, BORDER_COLOR);
+        rightCard.setLayout(new BorderLayout());
 
-        // Action Buttons Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        buttonPanel.setBackground(PAGE_BG);
-        buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Card Top Banner
+        RoundedPanel cardHeader = new RoundedPanel(18, PRIMARY_BLUE, PRIMARY_BLUE);
+        cardHeader.setLayout(new FlowLayout(FlowLayout.LEFT, 14, 10));
+        JLabel cardHeaderTitle = new JLabel("Advanced Algorithms — Week 7 Discussion");
+        cardHeaderTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        cardHeaderTitle.setForeground(Color.WHITE);
+        cardHeader.add(cardHeaderTitle);
 
-        JButton getStartedButton = new JButton("Get Started  →");
-        getStartedButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        getStartedButton.setBackground(PRIMARY_BLUE);
-        getStartedButton.setForeground(Color.WHITE);
-        getStartedButton.setFocusPainted(false);
-        getStartedButton.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        rightCard.add(cardHeader, BorderLayout.NORTH);
 
-        JButton signInButton = new JButton("Sign in to your account");
-        signInButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        signInButton.setBackground(Color.WHITE);
-        signInButton.setForeground(DARK_TEXT);
-        signInButton.setFocusPainted(false);
-        signInButton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(203, 213, 225)),
-            BorderFactory.createEmptyBorder(11, 20, 11, 20)
-        ));
-
-        buttonPanel.add(getStartedButton);
-        buttonPanel.add(signInButton);
-        leftPanel.add(buttonPanel);
-
-        heroPanel.add(leftPanel);
-
-        // --- 3. RIGHT MOCKUP CARD PANEL ---
-        JPanel rightCardWrapper = new JPanel(new GridBagLayout());
-        rightCardWrapper.setBackground(PAGE_BG);
-
-        JPanel mockupCard = new JPanel();
-        mockupCard.setLayout(new BoxLayout(mockupCard, BoxLayout.Y_AXIS));
-        mockupCard.setBackground(Color.WHITE);
-        mockupCard.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true));
-        mockupCard.setPreferredSize(new Dimension(460, 420));
-
-        // Card Header Bar
-        JPanel cardHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        cardHeader.setBackground(PRIMARY_BLUE);
-        JLabel cardTitle = new JLabel("Advanced Algorithms — Week 7 Discussion");
-        cardTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
-        cardTitle.setForeground(Color.WHITE);
-        cardHeader.add(cardTitle);
-        mockupCard.add(cardHeader);
-
-        // Card Body Content
+        // Card Content
         JPanel cardBody = new JPanel();
         cardBody.setLayout(new BoxLayout(cardBody, BoxLayout.Y_AXIS));
-        cardBody.setBackground(Color.WHITE);
-        cardBody.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        cardBody.setOpaque(false);
+        cardBody.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
 
-        // Lecturer post snippet
-        JTextArea post1 = new JTextArea("Dr. Sarah Chen (Lecturer)\nCan anyone explain the time complexity of Dijkstra's algorithm and when we should prefer A* instead?\n💬 8 replies   ⭐ 12 upvotes");
+        JLabel post1 = new JLabel("<html><b>Dr. Sarah Chen</b> <font color='#2563EB'>[Lecturer]</font><br><span style='color:#475569;'>Can anyone explain Dijkstra's algorithm time complexity?</span></html>");
         post1.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        post1.setForeground(new Color(51, 65, 85));
-        post1.setBackground(new Color(241, 245, 249));
-        post1.setLineWrap(true);
-        post1.setWrapStyleWord(true);
-        post1.setEditable(false);
-        post1.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        post1.setAlignmentX(Component.LEFT_ALIGNMENT);
         cardBody.add(post1);
 
-        cardBody.add(Box.createRigidArea(new Dimension(0, 10)));
+        cardBody.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        // Student reply snippet
-        JTextArea post2 = new JTextArea("James Mitchell (Student)\nDijkstra's runs in O((V + E) log V). A* is preferred when we have a good heuristic function...\n✓ Best Answer");
+        JLabel post2 = new JLabel("<html><b>James Mitchell</b> <font color='#64748B'>[Student]</font><br><span style='color:#475569;'>Dijkstra runs in O((V + E) log V) with a min-heap.</span> <font color='#16A34A'><b>✓ Best Answer</b></font></html>");
         post2.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        post2.setForeground(new Color(51, 65, 85));
-        post2.setBackground(new Color(236, 253, 245)); // Soft green tint
-        post2.setLineWrap(true);
-        post2.setWrapStyleWord(true);
-        post2.setEditable(false);
-        post2.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        post2.setAlignmentX(Component.LEFT_ALIGNMENT);
         cardBody.add(post2);
 
-        cardBody.add(Box.createRigidArea(new Dimension(0, 10)));
+        cardBody.add(Box.createRigidArea(new Dimension(0, 14)));
 
-        // AI Insight Box
-        JLabel aiBox = new JLabel(" 🧠 AI suggests 3 related resources on graph algorithms");
-        aiBox.setFont(new Font("SansSerif", Font.BOLD, 10));
-        aiBox.setForeground(PRIMARY_BLUE);
-        aiBox.setBackground(LIGHT_BLUE_BG);
-        aiBox.setOpaque(true);
-        aiBox.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        aiBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        RoundedPanel aiBox = new RoundedPanel(12, LIGHT_BLUE_BG, new Color(191, 219, 254));
+        aiBox.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        JLabel aiText = new JLabel("🧠 AI suggested 3 graph algorithm resources for this thread");
+        aiText.setFont(new Font("SansSerif", Font.BOLD, 10));
+        aiText.setForeground(PRIMARY_BLUE);
+        aiBox.add(aiText);
+
         cardBody.add(aiBox);
+        rightCard.add(cardBody, BorderLayout.CENTER);
 
-        mockupCard.add(cardBody);
-        rightCardWrapper.add(mockupCard);
+        gbc.gridx = 1;
+        gbc.weightx = 0.5;
+        gbc.insets = new Insets(0, 16, 0, 0);
+        hero.add(rightCard, gbc);
 
-        heroPanel.add(rightCardWrapper);
-        add(heroPanel, BorderLayout.CENTER);
-
-        // --- 4. BUTTON EVENT LISTENERS (Connecting to your Login Form) ---
-        signInButton.addActionListener(e -> openLogin());
-        navSignIn.addActionListener(e -> openLogin());
-
-        getStartedButton.addActionListener(e -> openRegister());
-        navGetStarted.addActionListener(e -> openRegister());
-
+        return hero;
     }
 
-    private void openLogin() {
-        new LoginForm().setVisible(true);
-        dispose(); // Closes the welcome frame and opens the sign-in window
+    // --- 3. FEATURES GRID (Removed Header Words) ---
+    private JPanel createFeaturesGridSection() {
+        JPanel grid = new JPanel(new GridLayout(2, 3, 16, 16));
+        grid.setOpaque(false);
+        grid.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        grid.add(createFeatureCard("💬", "Threaded Discussions", "Course forums with upvoting, best-answer tags, and instructor pinning."));
+        grid.add(createFeatureCard("🧠", "AI Recommendations", "Personalized resource and discussion suggestions powered by learning patterns."));
+        grid.add(createFeatureCard("👥", "Study Groups", "Create private or public groups with shared notes, polls, and tracking."));
+        grid.add(createFeatureCard("📝", "Quizzes & Reviews", "Auto-graded assessments with instant feedback and performance analytics."));
+        grid.add(createFeatureCard("🔔", "Notifications", "Contextual alerts for replies, deadlines, quiz results, and announcements."));
+        grid.add(createFeatureCard("📊", "Group Statistics", "Engagement metrics for lecturers and participation insights for users."));
+
+        return grid;
     }
 
-    private void openRegister() {
-        new RegisterForm().setVisible(true);
-        dispose(); // Closes the welcome frame and opens your RegisterForm window
+    private JPanel createFeatureCard(String icon, String title, String desc) {
+        RoundedPanel card = new RoundedPanel(16, Color.WHITE, BORDER_COLOR);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        JLabel iconAndTitle = new JLabel(icon + "  " + title);
+        iconAndTitle.setFont(new Font("SansSerif", Font.BOLD, 13));
+        iconAndTitle.setForeground(DARK_TEXT);
+        iconAndTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(iconAndTitle);
+
+        card.add(Box.createRigidArea(new Dimension(0, 6)));
+
+        JLabel descLbl = new JLabel("<html><body style='width:220px; color:#64748B;'>" + desc + "</body></html>");
+        descLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        descLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(descLbl);
+
+        return card;
     }
 
+    // --- 4. CALL TO ACTION BAR ---
+    private JPanel createCallToActionCard() {
+        RoundedPanel cta = new RoundedPanel(20, PRIMARY_BLUE, PRIMARY_BLUE);
+        cta.setLayout(new BorderLayout());
+        cta.setBorder(BorderFactory.createEmptyBorder(22, 28, 22, 28));
+        cta.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel ctaText = new JLabel("Ready to transform how your university collaborates?");
+        ctaText.setFont(new Font("SansSerif", Font.BOLD, 15));
+        ctaText.setForeground(Color.WHITE);
+        cta.add(ctaText, BorderLayout.WEST);
+
+        JButton ctaButton = new JButton("Create Account →") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        ctaButton.setFont(new Font("SansSerif", Font.BOLD, 12));
+        ctaButton.setForeground(PRIMARY_BLUE);
+        ctaButton.setFocusPainted(false);
+        ctaButton.setContentAreaFilled(false);
+        ctaButton.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18));
+        ctaButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        ctaButton.addActionListener(e -> {
+            new RegisterForm().setVisible(true);
+            dispose();
+        });
+
+        cta.add(ctaButton, BorderLayout.EAST);
+        return cta;
+    }
+
+    // --- CUSTOM BUTTON FACTORIES ---
+    private JButton createPrimaryButton(String text) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(PRIMARY_BLUE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton createOutlineButton(String text) {
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.setColor(BORDER_COLOR);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btn.setForeground(DARK_TEXT);
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    // --- HELPER COMPONENT FOR ROUNDED CONTAINERS ---
+    private static class RoundedPanel extends JPanel {
+        private final int cornerRadius;
+        private final Color backgroundColor;
+        private final Color borderColor;
+
+        public RoundedPanel(int radius, Color bgColor, Color bColor) {
+            super();
+            this.cornerRadius = radius;
+            this.backgroundColor = bgColor;
+            this.borderColor = bColor;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D graphics = (Graphics2D) g.create();
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Background
+            graphics.setColor(backgroundColor);
+            graphics.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
+
+            // Border
+            if (borderColor != null) {
+                graphics.setColor(borderColor);
+                graphics.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
+            }
+            graphics.dispose();
+        }
+    }
+
+    // --- ENTRY POINT ---
     public static void main(String[] args) {
-      SwingUtilities.invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
             new WelcomeFrame().setVisible(true);
         });
     }
