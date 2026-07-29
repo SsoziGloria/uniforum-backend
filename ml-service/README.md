@@ -8,7 +8,7 @@ never touches the model directly — it only calls this API.
 ```bash
 cd ml-service
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source .venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -21,7 +21,7 @@ models/tfidf_vectorizer.joblib
 ## 2. Run it
 
 ```bash
-uvicorn api.app:app --reload --port 8000
+uvicorn api.app:app --reload --port 8001
 ```
 
 Visit `http://localhost:8000/docs` — FastAPI auto-generates an interactive

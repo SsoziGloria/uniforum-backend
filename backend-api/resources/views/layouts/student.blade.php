@@ -8,12 +8,29 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="bg-slate-50 antialiased">
+<body class="bg-slate-50 antialiased" x-data="{ sidebarOpen: false }">
 
 <div class="h-screen flex overflow-hidden bg-slate-50">
 
     <!-- Fixed Sidebar -->
-    <aside class="w-64 h-screen bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+    <aside class="fixed inset-y-0 left-0 z-50
+           w-64 h-screen
+           bg-white border-r border-slate-200
+           flex flex-col
+           transform transition-transform duration-300
+           md:relative md:translate-x-0"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+        <div class="md:hidden flex justify-end p-4">
+            <button
+                @click="sidebarOpen = false"
+                class="text-3xl text-slate-700 hover:text-blue-600">
+
+                ✕
+
+            </button>
+
+        </div>
         
         <!-- Logo -->
         <div class="px-6 py-6 border-b border-slate-200 flex-shrink-0">
@@ -92,13 +109,43 @@
         </div>
     </aside>
 
+    <div
+        x-show="sidebarOpen"
+        x-transition.opacity
+        @click="sidebarOpen = false"
+        class="fixed inset-0 bg-black/40 z-40 md:hidden"
+        x-cloak>
+    </div>
+
     <!-- Main content (Scrolls independently) -->
     <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
 
         <!-- Top Navigation -->
         <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-10">
             <div class="flex items-center gap-4">
-                <div>
+
+                <button
+                    @click="sidebarOpen = true"
+                    class="md:hidden
+                        fixed
+                        top-5
+                        left-5
+                        z-50
+                        w-11
+                        h-11
+                        rounded-xl
+                        bg-white
+                        shadow-lg
+                        border
+                        border-slate-200
+                        flex
+                        items-center
+                        justify-center">
+
+                    ☰
+
+                </button>
+                <div class="pl-14 md:pl-0">
                     <h2 class="text-xl font-bold text-slate-800">
                           @yield('page-title', 'Dashboard')
                     </h2>
