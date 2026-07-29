@@ -1,13 +1,9 @@
 services:
   - type: web
     name: uniforum-laravel-backend
-    runtime: php
+    runtime: docker
     region: frankfurt
     plan: free
-    buildCommand: "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache"
-    startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
     envVars:
-      - key: PHP_VERSION
-        value: 8.2.0
       - key: ML_SERVICE_URL
         value: https://uniforum-ml-service.onrender.com
