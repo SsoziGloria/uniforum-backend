@@ -33,10 +33,11 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set up Laravel environment, install PHP/NPM dependencies, build Vite assets, and set permissions
+# Set up Laravel environment, build assets, and cache configs
 RUN cd /var/www/html/backend-api \
     && cp .env.example .env \
     && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env \
+    && sed -i 's|APP_URL=http://localhost|APP_URL=https://uniforum-laravel-backend.onrender.com|' .env \
     && touch database/database.sqlite \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-scripts \
@@ -44,6 +45,8 @@ RUN cd /var/www/html/backend-api \
     && npm run build \
     && php artisan key:generate --force \
     && php artisan migrate --force \
+    && php artisan config:clear \
+    && php artisan view:clear \
     && chown -R www-data:www-data /var/www/html/backend-api \
     && chmod -R 775 storage bootstrap/cache
 
