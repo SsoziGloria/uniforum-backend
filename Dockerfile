@@ -33,11 +33,12 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Set up Laravel environment, build assets, and cache configs
+# Set up environment with forced HTTPS asset URL, build assets, and cache configs
 RUN cd /var/www/html/backend-api \
     && cp .env.example .env \
     && sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env \
-    && sed -i 's|APP_URL=http://localhost|APP_URL=https://uniforum-laravel-backend.onrender.com|' .env \
+    && echo "APP_URL=https://uniforum-laravel-backend.onrender.com" >> .env \
+    && echo "ASSET_URL=https://uniforum-laravel-backend.onrender.com" >> .env \
     && touch database/database.sqlite \
     && mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache \
     && composer install --no-dev --optimize-autoloader --no-scripts \
